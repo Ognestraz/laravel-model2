@@ -5,8 +5,6 @@ use Illuminate\Support\Facades\File as FileFacade;
 
 trait File {
     
-    protected $publicPath = '';
-    
     public function files($part = null)
     {
         
@@ -59,23 +57,5 @@ trait File {
         
         return $fname;
         
-    }   
-    
-    public function src($part = '', $default = '') 
-    {
-        
-        $part_path = $part ? $part.'/' : '';
-        $filename = $this->imageDirSrc.$part_path.$this->filename;
-        
-        return is_file($filename) ? url('/').'/'.$filename : $default;
-        
     }
-    
-    public function srcNoCache($part = '', $default = '')
-    {
-        
-        return $this->src($part, $default).'?r='.rand();
-        
-    }
-    
 }
