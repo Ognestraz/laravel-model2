@@ -191,7 +191,7 @@ class Image extends Model
             $this->_makeList($img, $item);
         }
         
-        $dir = app()->basePath('public') . '/image/' . $variant . '/';
+        $dir = public_path() . '/image/' . $variant . '/';
         if (false === is_dir($dir)) {
             mkdir($dir, 0766, true);
             chmod($dir, 0766);
