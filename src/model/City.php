@@ -4,6 +4,8 @@ class City extends Model
 {
     use Traits\Act;
     
+    public $timestamps = false;
+
     protected $table = 'city';
     protected $visible = array(
         'id',
