@@ -26,6 +26,17 @@ class User extends Model implements Authenticatable
                 return $this->hasMany('Message', 'user');
             }        
     */
+
+    /**
+     * Get the unique identifier for the user.
+     *
+     * @return mixed
+     */
+    public function getAuthIdentifierName()
+    {
+            return $this->name;
+    }
+
     /**
      * Get the unique identifier for the user.
      *
