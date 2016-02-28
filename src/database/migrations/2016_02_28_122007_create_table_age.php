@@ -3,8 +3,13 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateTableCountry extends Migration
+class CreateTableAge extends Migration
 {
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
     /**
      * Run the migrations.
      *
@@ -12,7 +17,7 @@ class CreateTableCountry extends Migration
      */
     public function up()
     {
-        Schema::create('country', function (Blueprint $table) {
+        Schema::create('age', function (Blueprint $table) {
             $table->increments('id');
             $table->boolean('act');
             $table->integer('sort');
@@ -28,6 +33,6 @@ class CreateTableCountry extends Migration
      */
     public function down()
     {
-        Schema::drop('country');
+        Schema::drop('age');
     }
 }

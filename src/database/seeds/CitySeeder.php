@@ -17,6 +17,7 @@ class CitySeeder extends Seeder
         $listCity = [
             ['id' => 78, 'country_id' => 1, 'name' => 'Санкт-Петербург', 'short' => 'СПб'],
             ['id' => 77, 'country_id' => 1, 'name' => 'Москва', 'short' => 'Мск'],
+            ['id' => 63, 'country_id' => 1, 'name' => 'Самара', 'short' => 'Смр'],
         ];
 
         $dataBase = [
@@ -25,7 +26,9 @@ class CitySeeder extends Seeder
 
         DB::table('city')->truncate();
 
+        $i = 0;
         foreach ($listCity as $row) {
+            $row['sort'] = $i++;
             Model\City::create(array_merge($dataBase, $row));
         }
     }
