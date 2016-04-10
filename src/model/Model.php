@@ -7,11 +7,6 @@ class Model extends \Illuminate\Database\Eloquent\Model
     protected $validationMessages = null;
     static public $side = null;
 
-    static public $rules = array();    
-    static public $messages = array();   
-    
-    protected $error = array();
-    
     protected static function boot()
     {
         parent::boot();
