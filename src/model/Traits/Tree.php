@@ -1,7 +1,7 @@
 <?php namespace Model\Traits;
 
 use DB;
-use URL;
+use Illuminate\Support\Facades\Schema;
 
 trait Tree {
     
@@ -237,30 +237,34 @@ trait Tree {
         
         $query = $act ? self::where('act', 1) : self::newQuery();
         
-        $list = $query->orderBy('parent','asc')
+        if (Schema::hasColumn($this->table, 'path')) {
+            $list = $query->orderBy('parent','asc')
                 ->orderBy('sort','asc')
                 ->get();
+        } else {
+            $siteTable = (new \Model\Site())->getTable();
+            $query->select($this->table.'.*', "{$siteTable}.path");
+
+            $list = $query
+                ->leftJoin($siteTable, "{$this->table}.site_id", '=', "{$siteTable}.id")
+                ->orderBy("{$this->table}.parent",'asc')
+                ->orderBy("{$this->table}.sort",'asc')
+                ->get();
+        }
 
         foreach ($list as $item) {
-            
             $this->listTree[$item->id] = $item;
             $this->parentTree[$item->parent][] = $item->id;
-            
         }
         
         if (!empty($this->parentTree[0]) && is_array($this->parentTree[0])) {
-        
             foreach ($this->parentTree[0] as $k => $item) {
-
                 $this->_branch($item, $this->tree[$k], $model);
-
             }
-        
         }
         
         return $this->tree;
-                
-    }      
+    }
     
     public function getTree($id, $act = false) {
         
