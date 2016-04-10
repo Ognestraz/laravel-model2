@@ -1,8 +1,7 @@
 <?php namespace Model\Traits;
 
-trait Video 
+trait Video
 {
-
     public function videos($part = null)
     {
         $model = $this->hasMany('Model\Video', 'model_id');
@@ -13,5 +12,4 @@ trait Video
     {
         return $this->videos('main')->orderBy('sort', 'asc')->first();
     }
-
 }

@@ -3,8 +3,8 @@
 use DB;
 use Illuminate\Support\Facades\Schema;
 
-trait Tree {
-    
+trait Tree 
+{
     protected $tree;
     protected $listTree = array();
     protected $parentTree = array();
@@ -15,7 +15,8 @@ trait Tree {
     
     static public $rulesMove = array();      
     
-    public function save(array $options = array()) {
+    public function save(array $options = array())
+    {
         
         if (empty($this->id)) {
             
@@ -28,13 +29,26 @@ trait Tree {
         }
         
         return parent::save($options);
-        
     }
     
-    public function delete() {
-        
+    public function parent()
+    {
+        return !empty($this->parent) ? self::find($this->parent) : false;
+    }   
+    
+    public function childs()
+    {
+        return self::where('parent', $this->id);
+    }   
+    
+    public function brothers()
+    {
+        return self::where('parent', $this->parent)->where('id', '!=', $this->id);
+    }    
+    
+    public function delete()
+    {
         $parent = $this->parent;  
-        
         $this->sort = 0;
         $this->save();
 
@@ -47,10 +61,10 @@ trait Tree {
         }
         
         return false;
-        
     }
     
-    public function breadcrumbs() {
+    public function breadcrumbs()
+    {
         
         if (isset($this->pathParent)) {
             
@@ -92,7 +106,8 @@ trait Tree {
         
     }    
     
-    public function rootNode() {
+    public function rootNode()
+    {
         
         $path = $this->breadcrumbs();
 
@@ -100,7 +115,8 @@ trait Tree {
         
     }
     
-    protected function _resortNode($id, $parent, $type = 'inside') {
+    protected function _resortNode($id, $parent, $type = 'inside')
+    {
         
         if ($type == 'inside') {
              
@@ -194,7 +210,8 @@ trait Tree {
         
     }   
 
-    protected function _branch($id, &$b, $model = false) {
+    protected function _branch($id, &$b, $model = false)
+    {
         
         if ($id) {
             
@@ -231,7 +248,8 @@ trait Tree {
     }
     
     
-    public function createTree($model = false, $act = false) {
+    public function createTree($model = false, $act = false)
+    {
         
         $this->tree = array();
         
@@ -266,7 +284,8 @@ trait Tree {
         return $this->tree;
     }
     
-    public function getTree($id, $act = false) {
+    public function getTree($id, $act = false)
+    {
         
         $tree = $this->createTree(true, $act);
         
@@ -274,7 +293,8 @@ trait Tree {
         
     }
     
-    protected function _findChildrenTree($id, $tree = array()) {
+    protected function _findChildrenTree($id, $tree = array())
+    {
         
         foreach ($tree as $k => $v) {
             
@@ -303,7 +323,8 @@ trait Tree {
         
     }
     
-    protected function _getBranchList($id, &$list) {
+    protected function _getBranchList($id, &$list)
+    {
         
         $childs = self::where('parent', $id)->get();
         
@@ -316,7 +337,8 @@ trait Tree {
         
     }    
     
-    public function getBranch($id) {
+    public function getBranch($id)
+    {
         
         $list = array();
         $this->_getBranchList($id, $list);
@@ -325,7 +347,8 @@ trait Tree {
         
     }    
     
-    public function changePath($id, $parent = null) {
+    public function changePath($id, $parent = null)
+    {
         
         $listChilds = $this->getBranch($id);
         $node = self::find($id);
@@ -363,5 +386,3 @@ trait Tree {
     }    
     
 }
-
-?>
