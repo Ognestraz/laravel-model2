@@ -9,7 +9,7 @@ class Menu extends Model
     use SoftDeletes, Traits\Tree, Traits\Act;
     
     protected $table = 'menu';
-    protected $visible = array('id', 'parent', 'name', 'preview', 'path', 'autopath');
+    protected $visible = ['id', 'parent', 'name', 'preview', 'path', 'autopath'];
 
     public function active($parent = false) 
     {
@@ -27,14 +27,19 @@ class Menu extends Model
     
     public function site()
     {
-        return $this->belongsTo('Model\Site', 'element_id');
+        return $this->belongsTo(config('model.site') ?: 'Model\Site', 'element_id');
     }    
     
     public function link() 
     {
         return url('/').'/'.$this->path;
     }
-    
+
+    public function getParentAttribute($value)
+    {
+        return $value;
+    }
+
     public function save(array $options = array()) 
     {
         if (empty($this->id)) {

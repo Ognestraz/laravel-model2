@@ -35,7 +35,7 @@ class Site extends Model
         return $return;
     }
     
-    public function title()
+    public function getTitle()
     {
         return !empty($this->title) ? $this->title : $this->name;
     }

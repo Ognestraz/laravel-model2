@@ -4,7 +4,7 @@ trait Video
 {
     public function videos($part = null)
     {
-        $model = $this->hasMany('Model\Video', 'model_id');
+        $model = $this->hasMany(config('model.video') ?: 'Model\Video', 'model_id');
         return !empty($part) ? $model->where('part', $part) : $model;
     }
     

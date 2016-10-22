@@ -260,7 +260,8 @@ trait Tree
                 ->orderBy('sort','asc')
                 ->get();
         } else {
-            $siteTable = (new \Model\Site())->getTable();
+            $siteClass = config('model.site') ?: 'Model\Site';
+            $siteTable = (new $siteClass())->getTable();
             $query->select($this->table.'.*', "{$siteTable}.path");
 
             $list = $query

@@ -7,11 +7,11 @@ trait File
 {
     public function files($part = null)
     {
-        $model = $this->hasMany('Model\File', 'model_id');
+        $model = $this->hasMany(config('model.file') ?: 'Model\File', 'model_id');
         return !empty($part) ? $model->where('part', $part) : $model;
     }
     
-    public function file()
+    public function getFirstFile()
     {
         return $this->files('main')->orderBy('sort', 'asc')->first();
     }

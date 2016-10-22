@@ -23,8 +23,9 @@ class Model extends \Illuminate\Database\Eloquent\Model
     static public function get($model, $id = null) 
     {
         if (!empty($model)) {
-            $model_class = 'Model\\' . ucfirst($model);
-            return !empty($id) || is_numeric($id) ? $model_class::find($id) : new $model_class();
+            $nameModel = ucfirst($model);
+            $classModel = config("model.{$nameModel}") ?: "Model\{$nameModel}";
+            return null !== $id ? $classModel::find($id) : new $classModel();
         }
         
         return null;

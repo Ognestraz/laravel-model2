@@ -4,6 +4,6 @@ trait City
 {
     public function city()
     {
-        return $this->hasOne("Model\City", 'id', 'city_id');
+        return $this->hasOne(config('model.city') ?: 'Model\City', 'id', 'city_id');
     }
 }

@@ -4,11 +4,11 @@ trait Site
 {
     public function sites()
     {
-        return $this->hasMany("Model\Site", 'site_id');
+        return $this->hasMany(config('model.site') ?: 'Model\Site', 'site_id');
     }
 
     public function site()
     {
-        return $this->hasOne("Model\Site", 'id', 'site_id');
+        return $this->hasOne(config('model.site') ?: 'Model\Site', 'id', 'site_id');
     }
 }

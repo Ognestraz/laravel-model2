@@ -4,15 +4,16 @@ trait Menu
 {
     public function menu()
     {
-        return $this->hasMany("Model\Menu", 'element_id');
+        return $this->hasMany(config('model.menu') ?: 'Model\Menu', 'element_id');
     }
     
     public function inMenu()
     {
+        $classMenu = config('model.menu') ?: 'Model\Menu';
         $inMenu = array();
         if ($this->id) {
         
-            $menuSite = \Model\Menu::where('element_id', $this->id)
+            $menuSite = $classMenu::where('element_id', $this->id)
                     ->where('module', 'site')
                     ->get();
 
@@ -24,7 +25,7 @@ trait Menu
             }
         }
 
-        $menu = \Model\Menu::where('parent', 0)->get();
+        $menu = $classMenu::where('parent', 0)->get();
 
         $return = array();
         foreach ($menu as $m) {
