@@ -1,5 +1,6 @@
 {
     "name": "ognestraz/laravel-model2",
+    "license": "MIT",
     "description": "The Models for Laravel Framework.",
     "keywords": ["framework", "laravel", "lumen"],
     "authors": [
