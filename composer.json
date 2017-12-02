@@ -2,7 +2,7 @@
     "name": "ognestraz/laravel-model2",
     "license": "MIT",
     "description": "The Models for Laravel Framework.",
-    "keywords": ["framework", "laravel", "lumen"],
+    "keywords": ["framework", "laravel"],
     "authors": [
         {
             "name": "ognestraz",
@@ -16,10 +16,18 @@
     "autoload": {
         "psr-4": {
             "Model\\": "src/model/",
-            "Ognestraz\\Model\\": "src/app/"
+            "Ognestraz\\Model\\": "src/app/",
+            "Ognestraz\\Tests\\": "tests/"
         }
     },
     "config": {
         "preferred-install": "dist"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Ognestraz\\Model\\Providers\\ModelServiceProvider"
+            ]
+        }
     }
 }

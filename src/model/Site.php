@@ -4,8 +4,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Site extends Model
 {
-    use SoftDeletes, Traits\Menu, Traits\Tree, Traits\Seo, Traits\Path;
-    use Traits\Image, Traits\Video;
+    use SoftDeletes, Traits\Menu, Traits\Tree, Traits\Path;
     use Traits\Act, Traits\Sortable;
     
     static public $site = null;

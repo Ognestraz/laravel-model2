@@ -10,7 +10,7 @@ trait Tree
     protected $parentTree = array();
     protected $pathParent;    
     
-    protected $mainFieldsTree = array('act', 'name', 'parent', 'path', 'sort');
+    protected $mainFieldsTree = array('act', 'name', 'parent_id', 'path', 'order');
     protected $addFieldsTree = array('template');
     
     static public $rulesMove = array();      
@@ -21,10 +21,10 @@ trait Tree
         if (empty($this->id)) {
             
             $max_sort = DB::table($this->table)
-                    ->where('parent', $this->parent)
+                    ->where('parent_id', $this->parent_id)
                     ->where('deleted_at', null)
-                    ->max('sort');
-            $this->sort = is_numeric($max_sort) ? $max_sort + 1 : 0;
+                    ->max('order');
+            $this->order = is_numeric($max_sort) ? $max_sort + 1 : 0;
             
         }
         
@@ -33,23 +33,23 @@ trait Tree
     
     public function parent()
     {
-        return !empty($this->parent) ? self::find($this->parent) : false;
+        return !empty($this->parent_id) ? self::find($this->parent_id) : false;
     }   
     
     public function childs()
     {
-        return self::where('parent', $this->id);
+        return self::where('parent_id', $this->id);
     }   
     
     public function brothers()
     {
-        return self::where('parent', $this->parent)->where('id', '!=', $this->id);
+        return self::where('parent_id', $this->parent_id)->where('id', '!=', $this->id);
     }    
     
     public function delete()
     {
-        $parent = $this->parent;  
-        $this->sort = 0;
+        $parent = $this->parent_id;  
+        $this->order = 0;
         $this->save();
 
         if (parent::delete()) {
@@ -81,7 +81,7 @@ trait Tree
                 $parent_list[$item->id] = $item;
             }
 
-            $parent = $this->parent;
+            $parent = $this->parent_id;
 
             if ($parent) {
                 do {
@@ -91,7 +91,7 @@ trait Tree
                         'title' => $item->title,
                         'path' => $item->path,
                         'link' => url('/').'/'.$item->path);
-                    $parent = $item->parent;
+                    $parent = $item->parent_id;
 
                 } while (isset($parent_list[$parent]));
 
@@ -120,16 +120,16 @@ trait Tree
         
         if ($type == 'inside') {
              
-            $childs = self::where('parent', $parent)
+            $childs = self::where('parent_id', $parent)
                     ->where('id', '!=', $id)
-                    ->orderBy('sort', 'asc')
+                    ->orderBy('order', 'asc')
                     ->get();
             
             $k = !empty($id) ? 1 : 0;
             
             foreach ($childs as $child) {
                 
-                $child->sort = $k++;
+                $child->order = $k++;
                 $child->save();                
                 
             }
@@ -137,38 +137,38 @@ trait Tree
         } else {
 
             $nodeParent = self::find($parent);
-            $nodeParentSort = $nodeParent->sort;
+            $nodeParentSort = $nodeParent->order;
             
             $node = self::find($id);
-            $nodeSort = $node->sort;
+            $nodeSort = $node->order;
 
             if ($nodeSort >= $nodeParentSort) {
-                $node->sort = $nodeParentSort + 1;
+                $node->order = $nodeParentSort + 1;
             } else {
-                $node->sort = $nodeParentSort;
+                $node->order = $nodeParentSort;
             }
             $node->save();
             
-            $brothers = self::where('parent', '=', $nodeParent->parent)
+            $brothers = self::where('parent_id', '=', $nodeParent->parent)
                     ->where('id', '!=', $id);
             
             if ($nodeSort >= $nodeParentSort) {
                 
-                $brothers->where('sort', '>', $nodeParent->sort)
-                    ->where('sort', '<', $nodeSort);
+                $brothers->where('order', '>', $nodeParent->order)
+                    ->where('order', '<', $nodeSort);
                 
             } else {
 
-                $brothers->where('sort', '<=', $nodeParent->sort)
-                    ->where('sort', '>', $nodeSort);                
+                $brothers->where('order', '<=', $nodeParent->order)
+                    ->where('order', '>', $nodeSort);                
                 
             }
             
-            $brothers_list = $brothers->orderBy('sort','asc')
+            $brothers_list = $brothers->orderBy('order','asc')
                     ->get();
 
             foreach ($brothers_list as $brother) {
-                $brother->sort = ($nodeSort >= $nodeParentSort) ? $brother->sort + 1 : $brother->sort - 1;
+                $brother->order = ($nodeSort >= $nodeParentSort) ? $brother->order + 1 : $brother->order - 1;
                 $brother->save();
             }
             
@@ -179,30 +179,30 @@ trait Tree
     public function move($id, $parent, $type = 'inside') 
     {
         $node = self::find($id);
-        $parentParent = self::find($parent)->parent;
-        $newParent = $node->parent != $parentParent || $type == 'inside';
-        $oldParent = $node->parent;
+        $parentParent = self::find($parent)->parent_id;
+        $newParent = $node->parent_id != $parentParent || $type == 'inside';
+        $oldParent = $node->parent_id;
         $changeParent = $type == 'inside' ? $parent : $parentParent;
         
         $this->changePath($id, $newParent ? $changeParent : null);
         
         if ($type == 'inside') {
 
-            $node->sort = 0;
-            $node->parent = $parent;
+            $node->order = 0;
+            $node->parent_id = $parent;
             $node->save();
 
-            $this->_resortNode($id, $node->parent, $type);
+            $this->_resortNode($id, $node->parent_id, $type);
             $this->_resortNode(0, $oldParent, $type);
             
         } else {
             
-            $node->parent = $parentParent;
+            $node->parent_id = $parentParent;
             $node->save();
             
             $this->_resortNode($id, $parent, $type);
             $this->_resortNode(0, $oldParent);
-            $this->_resortNode(0, $node->parent);
+            $this->_resortNode(0, $node->parent_id);
             
         }
         
@@ -256,8 +256,8 @@ trait Tree
         $query = $act ? self::where('act', 1) : self::newQuery();
         
         if (Schema::hasColumn($this->table, 'path')) {
-            $list = $query->orderBy('parent','asc')
-                ->orderBy('sort','asc')
+            $list = $query->orderBy('parent_id','asc')
+                ->orderBy('order','asc')
                 ->get();
         } else {
             $siteClass = config('model.site') ?: 'Model\Site';
@@ -266,14 +266,14 @@ trait Tree
 
             $list = $query
                 ->leftJoin($siteTable, "{$this->table}.site_id", '=', "{$siteTable}.id")
-                ->orderBy("{$this->table}.parent",'asc')
+                ->orderBy("{$this->table}.parent_id",'asc')
                 ->orderBy("{$this->table}.sort",'asc')
                 ->get();
         }
 
         foreach ($list as $item) {
             $this->listTree[$item->id] = $item;
-            $this->parentTree[$item->parent][] = $item->id;
+            $this->parentTree[$item->parent_id][] = $item->id;
         }
         
         if (!empty($this->parentTree[0]) && is_array($this->parentTree[0])) {
@@ -327,7 +327,7 @@ trait Tree
     protected function _getBranchList($id, &$list)
     {
         
-        $childs = self::where('parent', $id)->get();
+        $childs = self::where('parent_id', $id)->get();
         
         foreach ($childs as $child) {
             
@@ -355,7 +355,7 @@ trait Tree
         $node = self::find($id);
         $old_path = $node->path;
         
-        $parent = $parent ? $parent : $node->parent;
+        $parent = $parent ? $parent : $node->parent_id;
         
         $nodeParent = self::find($parent);
         $n_path = $nodeParent->path;

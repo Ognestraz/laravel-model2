@@ -15,15 +15,16 @@ trait Path
     {
         static::creating(function($model) {
             if (!$model->path) {
-                $path = translite($model->name);
-                if ($model->parent) {
-                    $parent = $model->parent();
-                    if ($parent->path) {
-                        $model->path = $parent->path . '/' . $path;
-                    }
-                } else {
+                //$path = translite($model->name);
+                $path = $model->name;
+//                if ($model->parent) {
+//                    $parent = $model->parent();
+//                    if ($parent->path) {
+//                        $model->path = $parent->path . '/' . $path;
+//                    }
+//                } else {
                     $model->path = $path;                    
-                }
+//                }
             }
         });
     } 

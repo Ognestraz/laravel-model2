@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateTableColor extends Migration
+class CreateTableSite extends Migration
 {
     /**
      * Run the migrations.
@@ -12,12 +12,14 @@ class CreateTableColor extends Migration
      */
     public function up()
     {
-        Schema::create('color', function (Blueprint $table) {
+        Schema::create('site', function (Blueprint $table) {
             $table->increments('id');
-            $table->boolean('act');
-            $table->integer('sort');
+           // $table->boolean('act');
+            $table->integer('order');
+            $table->string('path');
             $table->string('name');
-            $table->string('code', 6);
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -28,6 +30,6 @@ class CreateTableColor extends Migration
      */
     public function down()
     {
-        Schema::drop('color');
+        Schema::drop('country');
     }
 }

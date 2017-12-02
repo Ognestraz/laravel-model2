@@ -12,13 +12,12 @@ class ModelServiceProvider extends ServiceProvider
     public function boot()
     {
         $pathDatabase = __DIR__.'/../../database/';
-        $pathMigrations = $pathDatabase . 'migrations';
-        $pathSeeds = $pathDatabase . 'seeds';
-        
         $this->publishes([
-            $pathMigrations => base_path('database/migrations'),
-            $pathSeeds => base_path('database/seeds')
+            $pathDatabase . 'migrations' => base_path('database/migrations'),
+            $pathDatabase . 'seeds'      => base_path('database/seeds')
         ]);
+        
+        $this->loadMigrationsFrom($pathDatabase . 'migrations');
     }
 
     /**
