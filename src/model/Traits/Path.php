@@ -2,31 +2,36 @@
 
 trait Path
 {
-    static public function findPath($path, $act = true, $fail = false)
+    static public function findPath($path)
     {
-        $model = self::where('path', '=', $path == '/' ? '' : $path);
-        if (isset($act)) {
-            $model->where('act', $act);
-        }
-        return $fail ? $model->firstOrFail() : $model->first();
+        return self::where('path', $path);
     }
 
     protected static function bootPath()
     {
         static::creating(function($model) {
-            if (!$model->path) {
-                //$path = translite($model->name);
-                $path = $model->name;
-//                if ($model->parent) {
-//                    $parent = $model->parent();
-//                    if ($parent->path) {
-//                        $model->path = $parent->path . '/' . $path;
-//                    }
-//                } else {
-                    $model->path = $path;                    
-//                }
+            if (null === $model->path) {
+                $model->path = $model->name;
             }
         });
-    } 
+        
+        static::saving(function($model) {
+            if (true === $model->isDirty('parent_id')) {
+                $part = explode('/', $model->path);
+                $path = end($part);
+                
+                if ($model->parent_id) {
+                    $parent = $model->getParent();
+                    if ($parent->path) {
+                        $model->path = ('/' !== $parent->path) ? $parent->path . '/' . $path : '/' . $path;
+                    } else {
+                        $model->path = $path;
+                    }
+                } else {
+                    $model->path = $path;                    
+                }
+            }
+        });
+    }
 
 }

@@ -10,14 +10,14 @@ class Model extends \Illuminate\Database\Eloquent\Model
     protected static function boot()
     {
         parent::boot();
-        $class = new ReflectionClass(static::class);
-        $traits = $class->getTraitNames();
-        foreach ($traits as $trait) {
-            $methodName = 'boot' . substr(strrchr($trait, '\\'), 1);
-            if (method_exists(static::class, $methodName)) {
-                static::$methodName();
-            }
-        }
+//        $class = new ReflectionClass(static::class);
+//        $traits = $class->getTraitNames();
+//        foreach ($traits as $trait) {
+//            $methodName = 'boot' . substr(strrchr($trait, '\\'), 1);
+//            if (method_exists(static::class, $methodName)) {
+//                static::$methodName();
+//            }
+//        }
     }    
     
     static public function get($model, $id = null) 

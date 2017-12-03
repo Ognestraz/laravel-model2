@@ -4,16 +4,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Site extends Model
 {
-    use SoftDeletes, Traits\Menu, Traits\Tree, Traits\Path;
-    use Traits\Act, Traits\Sortable;
-    
+    //use SoftDeletes, Traits\Menu, Traits\Tree, Traits\Path;
+    //use Traits\Act;
+    use Traits\Sortable;
+    use Traits\Treeable;
+    use Traits\Path;
+
     static public $site = null;
     
     protected $table = 'site';
     protected $visible = array(
         'id',
         'name',
-        'parent',
+        'order',
+        'parent_id',
         'path',
         'content'
     );

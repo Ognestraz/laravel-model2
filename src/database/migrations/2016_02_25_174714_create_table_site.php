@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
 class CreateTableSite extends Migration
 {
@@ -14,12 +14,15 @@ class CreateTableSite extends Migration
     {
         Schema::create('site', function (Blueprint $table) {
             $table->increments('id');
-           // $table->boolean('act');
-            $table->integer('order');
-            $table->string('path');
+            $table->boolean('act')->default(false);
+            $table->integer('parent_id')->default(0);
+            $table->integer('order')->default(0);
+            $table->string('path')->default('');
             $table->string('name');
             $table->timestamps();
             $table->softDeletes();
+            
+            $table->unique('path');
         });
     }
 
@@ -30,6 +33,6 @@ class CreateTableSite extends Migration
      */
     public function down()
     {
-        Schema::drop('country');
+        Schema::drop('site');
     }
 }
