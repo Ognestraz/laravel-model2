@@ -14,7 +14,7 @@ class MenuTest extends TestCase
 {
     use RefreshDatabase;
     
-    protected function setUp()
+    public function setUp()
     {
         parent::setUp();
 

@@ -19,13 +19,12 @@ class CreateTableMenu extends Migration
             $table->integer('order')->default(0);
             $table->string('path')->default('');
             $table->string('name');
-            $table->text('content')->default();
+            $table->text('content')->nullable();
             $table->integer('menuable_id')->default(0);
             $table->string('menuable_type')->default('');
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique('path');
         });
     }
 

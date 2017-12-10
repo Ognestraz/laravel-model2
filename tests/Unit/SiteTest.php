@@ -14,7 +14,7 @@ class SiteTest extends TestCase
 {
     use RefreshDatabase;
     
-    protected function setUp()
+    public function setUp()
     {
         parent::setUp();
 
@@ -120,6 +120,26 @@ class SiteTest extends TestCase
         $this->assertEquals('New4', Site::find(14)->name);
         $this->assertEquals('/', Site::find(14)->path);
 
+        $site = Site::findPath('/')->first();
+        $site->path = 'test';
+        $site->save();
+
+        $newSite = new Site();
+        $newSite->name = 'New5';
+        $newSite->parent_id = 0;
+        $newSite->path = '/';
+        $newSite->save();
+        $this->assertEquals(15, Site::findPath('/')->first()->id);
+        $this->assertEquals('New5', Site::find(15)->name);
+        $this->assertEquals('/', Site::find(15)->path);
+
+        $newSite = new Site();
+        $newSite->name = 'New6';
+        $newSite->parent_id = 15;
+        $newSite->save();
+        $this->assertEquals('New6', Site::find(16)->name);
+        $this->assertEquals('/New6', Site::find(16)->path);
+
         Site::find(1)->setParent(13);
         Site::find(2)->setParent(13);
         Site::find(3)->setParent(13);
@@ -127,9 +147,9 @@ class SiteTest extends TestCase
         $this->assertEquals('Test1', Site::find(2)->path);
         $this->assertEquals('Test2', Site::find(3)->path);
         
-        Site::find(4)->setParent(14);
-        Site::find(5)->setParent(14);
-        Site::find(6)->setParent(14);
+        Site::find(4)->setParent(15);
+        Site::find(5)->setParent(15);
+        Site::find(6)->setParent(15);
         $this->assertEquals('/Test3', Site::find(4)->path);
         $this->assertEquals('/Test4', Site::find(5)->path);
         $this->assertEquals('/Test5', Site::find(6)->path);        
@@ -146,7 +166,7 @@ class SiteTest extends TestCase
         Site::find(2)->setParent(3);
         $this->assertEquals('Test2/Test1', Site::find(2)->path);
         
-        Site::find(2)->setParent(14);
+        Site::find(2)->setParent(15);
         $this->assertEquals('/Test1', Site::find(2)->path);
 
         $this->assertEquals(null, Site::findPath('not-found')->first());

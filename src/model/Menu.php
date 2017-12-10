@@ -27,7 +27,8 @@ class Menu extends Model
      */
     protected $fillable = [
         'name',
-        'path'
+        'path',
+        'content'
     ];
 
     /**
