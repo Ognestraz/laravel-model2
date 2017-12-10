@@ -6,73 +6,48 @@ use Illuminate\Support\Facades\Request;
 
 class Menu extends Model
 {
-    use SoftDeletes, Traits\Tree, Traits\Act;
-    
-    protected $table = 'menu';
-    protected $visible = ['id', 'parent', 'name', 'preview', 'path', 'autopath'];
+    use SoftDeletes;
+    use Traits\Sortable;
+    use Traits\Treeable;
+    use Traits\Act;
 
-    public function active($parent = false) 
+    protected $table = 'menu';
+    protected $visible = [
+        'id',
+        'parent_id',
+        'name',
+        'content',
+        'path'
+    ];
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'name',
+        'path'
+    ];
+
+    /**
+     * Get all of the owning menuable models.
+     */
+    public function menuable()
     {
-        $path = substr(Request::fullUrl(), strlen(url('/')) + 1);
-        
-        if ($parent) {
-            
-            $p = explode('/', $path);
-            return !empty($p[0]) && $p[0] == $this->path;
-            
-        }
-        
-        return $this->path == $path;
-    }
-    
-    public function site()
-    {
-        return $this->belongsTo(config('model.site') ?: 'Model\Site', 'element_id');
+        return $this->morphTo();
     }    
-    
+
     public function link() 
     {
         return url('/').'/'.$this->path;
     }
 
-    public function getParentAttribute($value)
+    public function put(Model $model)
     {
-        return $value;
+        
+        echo class_basename($model);
+        
     }
-
-    public function save(array $options = array()) 
-    {
-        if (empty($this->id)) {
-            
-            $max_sort = DB::table($this->table)
-                    ->where('parent', !empty($this->parent) ? $this->parent : 0)
-                    ->where('deleted_at', null)
-                    ->max('sort');
-            $this->sort = is_numeric($max_sort) ? $max_sort + 1 : 0;
-            
-        }
-        
-        if (!empty($this->element_id)) {
-            
-            if (empty($this->module)) {
-        
-                $this->element_id = 0;
-                
-            } else {
-                
-                $module = 'Model\\'.ucfirst($this->module);
-                $element = $module::find($this->element_id);
-                
-                if (!empty($element->id)) {
-                
-                    $this->path = $element->path;
-                    
-                }
-                
-            }
-            
-        }
-        
-        return parent::save($options);
-    }
+    
 }

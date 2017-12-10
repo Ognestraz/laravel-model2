@@ -2,11 +2,14 @@
 
 trait Menu
 {
+    /**
+     * Get all of the
+     */
     public function menu()
     {
-        return $this->hasMany(config('model.menu') ?: 'Model\Menu', 'element_id');
+        return $this->morphMany(\Model\Menu::class, 'menuable');
     }
-    
+
     public function inMenu()
     {
         $classMenu = config('model.menu') ?: 'Model\Menu';

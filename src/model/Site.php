@@ -9,6 +9,7 @@ class Site extends Model
     use Traits\Sortable;
     use Traits\Treeable;
     use Traits\Path;
+    use Traits\Menu;
 
     static public $site = null;
     
