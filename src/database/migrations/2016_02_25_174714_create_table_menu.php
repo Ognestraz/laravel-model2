@@ -24,7 +24,6 @@ class CreateTableMenu extends Migration
             $table->string('menuable_type')->default('');
             $table->timestamps();
             $table->softDeletes();
-
         });
     }
 

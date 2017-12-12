@@ -8,11 +8,13 @@ use Model\Site;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Faker\Generator as Faker;
 use Illuminate\Database\Eloquent\Factory;
-use Illuminate\Support\Facades\DB;
 
 class MenuTest extends TestCase
 {
+    static protected $modelClass = Menu::class;
+    
     use RefreshDatabase;
+    use Traits\Treeable;
     
     public function setUp()
     {
@@ -42,12 +44,14 @@ class MenuTest extends TestCase
      *
      * @return void
      */
-    public function testBasic()
+    public function testCreateEmptyPath()
     {
-        $this->assertEquals('Test0', Menu::find(1)->name);
-        $this->assertEquals('Test0', Menu::find(1)->path);
-        $this->assertEquals(0, Menu::find(1)->parent_id);
-        $this->assertEquals(9, Menu::find(10)->order);
+        $menu = new Menu();
+        $menu->name = 'New1';
+        $menu->save();
+
+        $this->assertEquals('New1', Menu::find(11)->name);
+        $this->assertEquals('New1', Menu::find(11)->path);
     }
 
     /**

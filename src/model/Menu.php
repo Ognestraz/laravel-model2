@@ -9,6 +9,7 @@ class Menu extends Model
     use SoftDeletes;
     use Traits\Sortable;
     use Traits\Treeable;
+    use Traits\Path;
     use Traits\Act;
 
     protected $table = 'menu';
