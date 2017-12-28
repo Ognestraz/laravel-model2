@@ -7,28 +7,37 @@ trait Path
         return self::where('path', $path);
     }
 
+    protected static function eventSaving($model)
+    {
+        if (null === $model->path) {
+            $model->path = $model->name;
+        }
+        
+        if (true === $model->isDirty('parent_id')/* && true !== $model->isDirty('path')*/) {
+            $part = explode('/', $model->path);
+            $path = end($part);
+
+            if ($model->parent_id) {
+                $parent = $model->getParent();
+                if ($parent->path) {
+                    $model->path = ('/' !== $parent->path) ? $parent->path . '/' . $path : '/' . $path;
+                } elseif ($path) {
+                    $model->path = $path;
+                }
+            } elseif ($path) {
+                $model->path = $path;                    
+            }
+        }
+    }
+
     protected static function bootPath()
     {
-        static::saving(function($model) {
-            if (null === $model->path) {
-                $model->path = $model->name;
-            }
+        static::creating(function($model) {
+            static::eventSaving($model);
+        });
 
-            if (true === $model->isDirty('parent_id')) {
-                $part = explode('/', $model->path);
-                $path = end($part);
-
-                if ($model->parent_id) {
-                    $parent = $model->getParent();
-                    if ($parent->path) {
-                        $model->path = ('/' !== $parent->path) ? $parent->path . '/' . $path : '/' . $path;
-                    } elseif ($path) {
-                        $model->path = $path;
-                    }
-                } elseif ($path) {
-                    $model->path = $path;                    
-                }
-            }
+        static::updating(function($model) {
+            static::eventSaving($model);
         });
     }
 

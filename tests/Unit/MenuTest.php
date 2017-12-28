@@ -15,7 +15,8 @@ class MenuTest extends TestCase
     
     use RefreshDatabase;
     use Traits\Treeable;
-    
+    use Traits\Path;
+
     public function setUp()
     {
         parent::setUp();

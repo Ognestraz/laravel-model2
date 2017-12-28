@@ -16,12 +16,8 @@ class SiteTest extends TestCase
 
     use RefreshDatabase;
     use Traits\Treeable;
-    
-//    public function getModelClass()
-//    {
-//        return 
-//    }
-    
+    use Traits\Path;
+
     public function setUp()
     {
         parent::setUp();
