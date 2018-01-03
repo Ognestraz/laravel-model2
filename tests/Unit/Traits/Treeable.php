@@ -3,56 +3,311 @@
 namespace Ognestraz\Tests\Unit\Traits;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 trait Treeable
 {
-    /**
-     * A basic test example.
-     *
-     * @return void
-     */
-    public function testTreeableBasic()
+    public static function buildTree($nodes)
     {
         $modelClass = static::$modelClass;
-        $this->assertEquals('Test0', $modelClass::find(1)->name);
-        $this->assertEquals('Test0', $modelClass::find(1)->path);
-        $this->assertEquals(0, $modelClass::find(1)->parent_id);
-        $this->assertEquals(9, $modelClass::find(10)->order);
-    }
-
-    /**
-     * A basic test example.
-     *
-     * @return void
-     */
-    public function testTreeableSortable()
-    {
-        $modelClass = static::$modelClass;
-        $this->assertEquals(10, $modelClass::all()->count());
-
-        foreach ($modelClass::all() as $model) {
-            $this->assertEquals($model->order, $model->id - 1);
+        foreach ($nodes as $node) {
+            $model = new $modelClass();
+            foreach ($node as $field => $value) {
+                $model->$field = $value;
+            }
+            $model->save();            
         }
     }
     
+    public static function getTree($id = null)
+    {
+        $modelClass = static::$modelClass;
+        return (new $modelClass())->getTree($id);
+    }    
+
+    /**
+     *
+     * @return void
+     */
+    public function testPathFirstRoot()
+    {
+        DB::enableQueryLog();
+        self::buildTree([
+            ['name' => 'Test1']
+        ]);
+
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0]
+        ], self::getTree());
+
+        $this->assertEquals(3, count(DB::getQueryLog()));
+    }
+
+    /**
+     *
+     * @return void
+     */
+    public function testPathTwoRoots()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+        ]);
+
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 2, 'path' => 'Test2', 'order' => 1]
+        ], self::getTree());        
+    }
+
+    /**
+     *
+     * @return void
+     */
+    public function testPathOneChildCreate()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2', 'parent_id' => 1],
+        ]);
+
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0]
+                ]
+            ]    
+        ], self::getTree());        
+    }
+
+    /**
+     *
+     * @return void
+     */
+    public function testPathOneChildMoveSecondToFirst()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+        ]);
+        
+        $modelClass = static::$modelClass;
+        $modelClass::find(2)->setParent(1);
+
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0]
+                ]
+            ]
+        ], self::getTree());
+    }
+
+    /**
+     *
+     * @return void
+     */
+    public function testPathOneChildMoveFirstToSecond()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+        ]);
+        
+        $modelClass = static::$modelClass;
+        $modelClass::find(1)->setParent(2);
+        
+        $this->assertEquals([
+            ['id' => 2, 'path' => 'Test2', 'order' => 0,
+                'childs' => [
+                    ['id' => 1, 'path' => 'Test2/Test1', 'order' => 0]
+                ]
+            ]
+        ], self::getTree());        
+    }    
+    
+    /**
+     *
+     * @return void
+     */
+    public function testPathChildTwoLevel()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3']
+        ]);
+        
+        $modelClass = static::$modelClass;
+        $modelClass::find(2)->setParent(1);    
+        $modelClass::find(3)->setParent(2);    
+       
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0,
+                        'childs' => [
+                            ['id' => 3, 'path' => 'Test1/Test2/Test3', 'order' => 0]
+                        ]
+                    ]
+                ]
+            ]
+        ], self::getTree());
+    }
+
+    /**
+     *
+     * @return void
+     */
+    public function testPathTwoChild()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3']
+        ]);
+        
+        $modelClass = static::$modelClass;
+        $modelClass::find(2)->setParent(1);
+        $modelClass::find(3)->setParent(1);    
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0],
+                    ['id' => 3, 'path' => 'Test1/Test3', 'order' => 1],
+                ]
+            ]
+        ], self::getTree());
+    }
+    
+    /**
+     *
+     * @return void
+     */
+    public function testPathMoveBitweenParents()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3']
+        ]);
+        
+        $modelClass = static::$modelClass;
+        $modelClass::find(2)->setParent(1);    
+        $modelClass::find(3)->setParent(1);
+        $modelClass::find(3)->setParent(2);
+
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0,
+                        'childs' => [
+                            ['id' => 3, 'path' => 'Test1/Test2/Test3', 'order' => 0]
+                        ]
+                    ]
+                ]
+            ]
+        ], self::getTree());
+    }
+    
+    /**
+     *
+     * @return void
+     */
+    public function testPathMoveLongChain()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3'],
+            ['name' => 'Test4'],
+            ['name' => 'Test5'],
+            ['name' => 'Test6'],
+            ['name' => 'Test7'],
+        ]);
+
+        $modelClass = static::$modelClass;
+        $modelClass::find(2)->setParent(1);    
+        $modelClass::find(3)->setParent(2);
+        $modelClass::find(4)->setParent(3);
+        $modelClass::find(5)->setParent(4);
+        
+        $modelClass::find(7)->setParent(6);
+
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0,
+                        'childs' => [
+                            ['id' => 3, 'path' => 'Test1/Test2/Test3', 'order' => 0,
+                                'childs' => [
+                                    ['id' => 4, 'path' => 'Test1/Test2/Test3/Test4', 'order' => 0,
+                                        'childs' => [
+                                            ['id' => 5, 'path' => 'Test1/Test2/Test3/Test4/Test5', 'order' => 0]
+                                        ]       
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            ['id' => 6, 'path' => 'Test6', 'order' => 1,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test6/Test7', 'order' => 0]
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(2)->setParent(7);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 6, 'path' => 'Test6', 'order' => 1,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test6/Test7', 'order' => 0,
+                        'childs' => [
+                            ['id' => 2, 'path' => 'Test6/Test7/Test2', 'order' => 0,
+                                'childs' => [
+                                    ['id' => 3, 'path' => 'Test6/Test7/Test2/Test3', 'order' => 0,
+                                        'childs' => [
+                                            ['id' => 4, 'path' => 'Test6/Test7/Test2/Test3/Test4', 'order' => 0,
+                                                'childs' => [
+                                                    ['id' => 5, 'path' => 'Test6/Test7/Test2/Test3/Test4/Test5', 'order' => 0]
+                                                ]                                                
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ], self::getTree());        
+    }    
+
     /**
      * A basic test example.
      *
      * @return void
      */
-    public function testTreeableSortableNormalize()
+    public function testTreeableOrderBasic()
     {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3'],
+            ['name' => 'Test4'],
+            ['name' => 'Test5']
+        ]);
         $modelClass = static::$modelClass;
-        $deletedId = 5;
-        $modelClass::find($deletedId)->delete();
-        
-        foreach ($modelClass::all() as $model) {
-            if ($model->id > $deletedId) {
-                $this->assertEquals($model->order, $model->id - 2);
-            } else {
-                $this->assertEquals($model->order, $model->id - 1);
-            }
-        }
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 2, 'path' => 'Test2', 'order' => 1],
+            ['id' => 3, 'path' => 'Test3', 'order' => 2],
+            ['id' => 4, 'path' => 'Test4', 'order' => 3],
+            ['id' => 5, 'path' => 'Test5', 'order' => 4],
+        ], self::getTree());
     }
 
     /**
@@ -60,362 +315,890 @@ trait Treeable
      *
      * @return void
      */
-    public function testTreeableMoveBefore()
+    public function testTreeableOrderDelete()
     {
-        $modelClass = static::$modelClass;
-        
-        $modelClass::find(2)->setParent(1);
-        $modelClass::find(3)->setParent(1);
-        $modelClass::find(4)->setParent(1);
-        $modelClass::find(5)->setParent(1);
-        $modelClass::find(6)->setParent(1);
-        $modelClass::find(7)->setParent(5);
-        $modelClass::find(8)->setParent(5);
-        $modelClass::find(9)->setParent(5);
-        $modelClass::find(10)->setParent(9);
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3'],
+            ['name' => 'Test4'],
+            ['name' => 'Test5']
+        ]);
+        $modelClass = static::$modelClass;        
 
-        $this->assertEquals(0, $modelClass::find(2)->order);
-        $this->assertEquals(1, $modelClass::find(3)->order);
-        $this->assertEquals(2, $modelClass::find(4)->order);
-        $this->assertEquals(3, $modelClass::find(5)->order);
-        $this->assertEquals(4, $modelClass::find(6)->order);
-        $this->assertEquals(0, $modelClass::find(7)->order);
-        $this->assertEquals(1, $modelClass::find(8)->order);
-        $this->assertEquals(2, $modelClass::find(9)->order);
-        $this->assertEquals(0, $modelClass::find(10)->order);
-
-        $modelClass::find(4)->moveBefore(2);
-        $this->assertEquals(0, $modelClass::find(4)->order);
-        $this->assertEquals(1, $modelClass::find(2)->order);
-        $this->assertEquals(2, $modelClass::find(3)->order);
-        $this->assertEquals(3, $modelClass::find(5)->order);
-        $this->assertEquals(4, $modelClass::find(6)->order);
-
-        $modelClass::find(3)->moveBefore(2);
-        $this->assertEquals(0, $modelClass::find(4)->order);
-        $this->assertEquals(1, $modelClass::find(3)->order);
-        $this->assertEquals(2, $modelClass::find(2)->order);
-        $this->assertEquals(3, $modelClass::find(5)->order);
-        $this->assertEquals(4, $modelClass::find(6)->order);
-        
-        $modelClass::find(4)->moveBefore(2);
-        $this->assertEquals(0, $modelClass::find(3)->order);
-        $this->assertEquals(1, $modelClass::find(4)->order);
-        $this->assertEquals(2, $modelClass::find(2)->order);
-        $this->assertEquals(3, $modelClass::find(5)->order);
-        $this->assertEquals(4, $modelClass::find(6)->order);
-        
-        $modelClass::find(4)->moveBefore(6);
-        $this->assertEquals(0, $modelClass::find(3)->order);
-        $this->assertEquals(1, $modelClass::find(2)->order);
-        $this->assertEquals(2, $modelClass::find(5)->order);
-        $this->assertEquals(3, $modelClass::find(4)->order);
-        $this->assertEquals(4, $modelClass::find(6)->order);
-
-        $this->assertEquals(5, $modelClass::find(1)->childs()->count());
-        $this->assertEquals(3, $modelClass::find(5)->childs()->count());
-        $modelClass::find(4)->moveBefore(8);
-        $this->assertEquals(4, $modelClass::find(1)->childs()->count());
-        $this->assertEquals(4, $modelClass::find(5)->childs()->count());
-        $this->assertEquals(0, $modelClass::find(3)->order);
-        $this->assertEquals(1, $modelClass::find(2)->order);
-        $this->assertEquals(2, $modelClass::find(5)->order);
-        $this->assertEquals(3, $modelClass::find(6)->order);
-
-        $this->assertEquals(0, $modelClass::find(7)->order);
-        $this->assertEquals(1, $modelClass::find(4)->order);
-        $this->assertEquals(2, $modelClass::find(8)->order);
-        $this->assertEquals(3, $modelClass::find(9)->order);
-        
-        $this->assertEquals(1, $modelClass::find(9)->childs()->count());
-        $modelClass::find(8)->moveBefore(10);
-        $this->assertEquals(3, $modelClass::find(5)->childs()->count());
-        $this->assertEquals(2, $modelClass::find(9)->childs()->count());
-        $this->assertEquals(0, $modelClass::find(8)->order);
-        $this->assertEquals(1, $modelClass::find(10)->order);
-
-        $this->assertEquals(0, $modelClass::find(7)->order);
-        $this->assertEquals(1, $modelClass::find(4)->order);
-        $this->assertEquals(2, $modelClass::find(9)->order);
-        
-        $modelClass::find(10)->moveBefore(8);
-        $this->assertEquals(2, $modelClass::find(9)->childs()->count());
-        $this->assertEquals(0, $modelClass::find(10)->order);
-        $this->assertEquals(1, $modelClass::find(8)->order);
-        
-        $modelClass::find(10)->moveBefore(7);
-        $this->assertEquals(1, $modelClass::find(9)->childs()->count());
-        $this->assertEquals(4, $modelClass::find(5)->childs()->count());
-        $this->assertEquals(0, $modelClass::find(8)->order);
-
-        $this->assertEquals(0, $modelClass::find(10)->order);
-        $this->assertEquals(1, $modelClass::find(7)->order);
-        $this->assertEquals(2, $modelClass::find(4)->order);
-        $this->assertEquals(3, $modelClass::find(9)->order);
-        
-        $modelClass::find(8)->moveBefore(4);
-        $this->assertEquals(0, $modelClass::find(9)->childs()->count());
-        $this->assertEquals(5, $modelClass::find(5)->childs()->count());
-        $this->assertEquals(0, $modelClass::find(10)->order);
-        $this->assertEquals(1, $modelClass::find(7)->order);
-        $this->assertEquals(2, $modelClass::find(8)->order);
-        $this->assertEquals(3, $modelClass::find(4)->order);
-        $this->assertEquals(4, $modelClass::find(9)->order);
-        
-        $this->assertEquals(1, (new $modelClass())->childs()->count());
-        $modelClass::find(8)->moveBefore(1);
-        $this->assertEquals(2, (new $modelClass())->childs()->count());
-        $this->assertEquals(4, $modelClass::find(5)->childs()->count());        
-        $this->assertEquals(0, $modelClass::find(10)->order);
-        $this->assertEquals(1, $modelClass::find(7)->order);
-        $this->assertEquals(2, $modelClass::find(4)->order);
-        $this->assertEquals(3, $modelClass::find(9)->order);
-
-        $this->assertEquals(0, $modelClass::find(8)->order);
-        $this->assertEquals(1, $modelClass::find(1)->order);
-    }
-
-    /**
-     * A basic test example.
-     *
-     * @return void
-     */
-    public function testTreeableMoveAfter()
-    {
-        $modelClass = static::$modelClass;
-        
-        $modelClass::find(2)->setParent(1);
-        $modelClass::find(3)->setParent(1);
-        $modelClass::find(4)->setParent(1);
-        $modelClass::find(5)->setParent(1);
-        $modelClass::find(6)->setParent(1);
-        $modelClass::find(7)->setParent(5);
-        $modelClass::find(8)->setParent(5);
-        $modelClass::find(9)->setParent(5);
-        $modelClass::find(10)->setParent(9);
-
-        $modelClass::find(4)->moveAfter(2);
-        $this->assertEquals(0, $modelClass::find(2)->order);
-        $this->assertEquals(1, $modelClass::find(4)->order);
-        $this->assertEquals(2, $modelClass::find(3)->order);
-        $this->assertEquals(3, $modelClass::find(5)->order);
-        $this->assertEquals(4, $modelClass::find(6)->order);
-
-        $modelClass::find(3)->moveAfter(5);
-        $this->assertEquals(0, $modelClass::find(2)->order);
-        $this->assertEquals(1, $modelClass::find(4)->order);
-        $this->assertEquals(2, $modelClass::find(5)->order);
-        $this->assertEquals(3, $modelClass::find(3)->order);
-        $this->assertEquals(4, $modelClass::find(6)->order);        
-
-        $modelClass::find(2)->moveAfter(6);
-        $this->assertEquals(0, $modelClass::find(4)->order);
-        $this->assertEquals(1, $modelClass::find(5)->order);
-        $this->assertEquals(2, $modelClass::find(3)->order);        
-        $this->assertEquals(3, $modelClass::find(6)->order);        
-        $this->assertEquals(4, $modelClass::find(2)->order);
-        
-        $modelClass::find(2)->moveAfter(4);
-        $this->assertEquals(0, $modelClass::find(4)->order);
-        $this->assertEquals(1, $modelClass::find(2)->order); 
-        $this->assertEquals(2, $modelClass::find(5)->order);
-        $this->assertEquals(3, $modelClass::find(3)->order);        
-        $this->assertEquals(4, $modelClass::find(6)->order);
-        
-        $this->assertEquals(5, $modelClass::find(1)->childs()->count());
-        $this->assertEquals(3, $modelClass::find(5)->childs()->count());
-        $modelClass::find(4)->moveAfter(7);
-        $this->assertEquals(4, $modelClass::find(1)->childs()->count());
-        $this->assertEquals(4, $modelClass::find(5)->childs()->count());
-        
-        $this->assertEquals(0, $modelClass::find(2)->order); 
-        $this->assertEquals(1, $modelClass::find(5)->order); 
-        $this->assertEquals(2, $modelClass::find(3)->order);        
-        $this->assertEquals(3, $modelClass::find(6)->order);        
- 
-        $this->assertEquals(0, $modelClass::find(7)->order);
-        $this->assertEquals(1, $modelClass::find(4)->order);
-        $this->assertEquals(2, $modelClass::find(8)->order);        
-        $this->assertEquals(3, $modelClass::find(9)->order);
-
-        $modelClass::find(3)->moveAfter(9);
-        $this->assertEquals(3, $modelClass::find(1)->childs()->count());
-        $this->assertEquals(5, $modelClass::find(5)->childs()->count());
-        $this->assertEquals(0, $modelClass::find(2)->order);
-        $this->assertEquals(1, $modelClass::find(5)->order);
-        $this->assertEquals(2, $modelClass::find(6)->order);  
-
-        $this->assertEquals(0, $modelClass::find(7)->order);
-        $this->assertEquals(1, $modelClass::find(4)->order); 
-        $this->assertEquals(2, $modelClass::find(8)->order);        
-        $this->assertEquals(3, $modelClass::find(9)->order);
-        $this->assertEquals(4, $modelClass::find(3)->order);
-
-        $this->assertEquals(1, $modelClass::find(9)->childs()->count());
-        $modelClass::find(6)->moveAfter(10);
-        $this->assertEquals(2, $modelClass::find(1)->childs()->count());
-        $this->assertEquals(5, $modelClass::find(5)->childs()->count());
-        $this->assertEquals(0, $modelClass::find(2)->order); 
-        $this->assertEquals(1, $modelClass::find(5)->order);
-
-        $this->assertEquals(0, $modelClass::find(10)->order);
-        $this->assertEquals(1, $modelClass::find(6)->order);
-
-        $modelClass::find(2)->moveAfter(1);
-        $this->assertEquals(1, $modelClass::find(1)->childs()->count());
-        $this->assertEquals(2, (new $modelClass())->childs()->count());
-        $this->assertEquals(0, $modelClass::find(5)->order);
-
-        $this->assertEquals(0, $modelClass::find(1)->order);
-        $this->assertEquals(1, $modelClass::find(2)->order);
-
-        $modelClass::find(5)->moveAfter(1);
-        $this->assertEquals(0, $modelClass::find(1)->childs()->count());
-        $this->assertEquals(3, (new $modelClass())->childs()->count());
-
-        $this->assertEquals(0, $modelClass::find(1)->order);
-        $this->assertEquals(1, $modelClass::find(5)->order);
-        $this->assertEquals(2, $modelClass::find(2)->order);
-    }
-
-    /**
-     * A basic test example.
-     *
-     * @return void
-     */
-    public function testTreeableSetParentOneLevel()
-    {
-        $modelClass = static::$modelClass;
-        
-        $modelClass::find(2)->setParent(1);
-        $modelClass::find(4)->setParent(1);
-        $modelClass::find(3)->setParent(1);
-
-        $this->assertEquals(1, $modelClass::find(2)->getParent()->id);
-        $this->assertEquals(1, $modelClass::find(3)->getParent()->id);
-        $this->assertEquals(1, $modelClass::find(4)->getParent()->id);
-
-        $this->assertEquals(3, $modelClass::find(1)->childs()->count());
-        
-        $childs = $modelClass::find(1)->childs()->orderBy('order')->get();
-        $this->assertEquals(2, $childs[0]->id);
-        $this->assertEquals(4, $childs[1]->id);
-        $this->assertEquals(3, $childs[2]->id);
-
-        $modelClass::find(4)->delete();
-        $this->assertEquals(null, $modelClass::find(4));
-        
-        $this->assertEquals(2, $modelClass::find(1)->childs()->count());
-        
-        $childs = $modelClass::find(1)->childs()->orderBy('order')->get();
-        $this->assertEquals(2, $childs[0]->id);
-        $this->assertEquals(3, $childs[1]->id);
+        $modelClass::find(3)->delete();
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 2, 'path' => 'Test2', 'order' => 1],
+            ['id' => 4, 'path' => 'Test4', 'order' => 2],
+            ['id' => 5, 'path' => 'Test5', 'order' => 3],
+        ], self::getTree());
         
         $modelClass::find(1)->delete();
-        $this->assertEquals(null, $modelClass::find(1));
-        $this->assertEquals(null, $modelClass::find(2));
-        $this->assertEquals(null, $modelClass::find(3));
-        $this->assertEquals(null, $modelClass::find(4));
-    }
-
-    /**
-     * A basic test example.
-     *
-     * @return void
-     */
-    public function testTreeableSetParentMultiLevel()
-    {
-        $modelClass = static::$modelClass;
+        $this->assertEquals([
+            ['id' => 2, 'path' => 'Test2', 'order' => 0],
+            ['id' => 4, 'path' => 'Test4', 'order' => 1],
+            ['id' => 5, 'path' => 'Test5', 'order' => 2],
+        ], self::getTree());
         
-        $modelClass::find(2)->setParent(1);
-        $modelClass::find(3)->setParent(1);
-        $modelClass::find(4)->setParent(1);
-        $modelClass::find(5)->setParent(3);
-        $modelClass::find(6)->setParent(3);
-        $modelClass::find(7)->setParent(5);
-        $modelClass::find(8)->setParent(5);
-        $modelClass::find(9)->setParent(8);
-        $modelClass::find(10)->setParent(9);
-
-        $this->assertEquals(3, $modelClass::find(1)->childs()->count());
-        $this->assertEquals(2, $modelClass::find(5)->childs()->count());
-        $this->assertEquals(1, $modelClass::find(8)->childs()->count());
-        $this->assertEquals(1, $modelClass::find(9)->childs()->count());
-
         $modelClass::find(5)->delete();
-
-        $this->assertNotEquals(null, $modelClass::find(1));
-        $this->assertNotEquals(null, $modelClass::find(2));
-        $this->assertNotEquals(null, $modelClass::find(3));
-        $this->assertNotEquals(null, $modelClass::find(4));
-        $this->assertEquals(null, $modelClass::find(5));
-        $this->assertNotEquals(null, $modelClass::find(6));
-        $this->assertEquals(null, $modelClass::find(7));
-        $this->assertEquals(null, $modelClass::find(8));
-        $this->assertEquals(null, $modelClass::find(9));
-        $this->assertEquals(null, $modelClass::find(10));
+        $this->assertEquals([
+            ['id' => 2, 'path' => 'Test2', 'order' => 0],
+            ['id' => 4, 'path' => 'Test4', 'order' => 1],
+        ], self::getTree());
+        
+        $modelClass::find(2)->delete();
+        $this->assertEquals([
+            ['id' => 4, 'path' => 'Test4', 'order' => 0],
+        ], self::getTree());
+        
+        $modelClass::find(4)->delete();
+        $this->assertEquals([], self::getTree());           
     }
 
     /**
-     * A basic test example.
-     *
      * @return void
      */
-    public function testTreeableGetTree()
+    public function testTreeableMoveBeforeOneLevelUp()
     {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3'],
+            ['name' => 'Test4'],
+            ['name' => 'Test5'],
+        ]);
+        $modelClass = static::$modelClass;
+
+        $modelClass::find(4)->moveBefore(1);
+        $this->assertEquals([
+            ['id' => 4, 'path' => 'Test4', 'order' => 0],
+            ['id' => 1, 'path' => 'Test1', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 3, 'path' => 'Test3', 'order' => 3],
+            ['id' => 5, 'path' => 'Test5', 'order' => 4],
+        ], self::getTree());
+        
+        $modelClass::find(3)->moveBefore(1);
+        $this->assertEquals([
+            ['id' => 4, 'path' => 'Test4', 'order' => 0],
+            ['id' => 3, 'path' => 'Test3', 'order' => 1],
+            ['id' => 1, 'path' => 'Test1', 'order' => 2],
+            ['id' => 2, 'path' => 'Test2', 'order' => 3],
+            ['id' => 5, 'path' => 'Test5', 'order' => 4]
+        ], self::getTree());
+        
+        $modelClass::find(5)->moveBefore(4);
+        $this->assertEquals([
+            ['id' => 5, 'path' => 'Test5', 'order' => 0],
+            ['id' => 4, 'path' => 'Test4', 'order' => 1],
+            ['id' => 3, 'path' => 'Test3', 'order' => 2],
+            ['id' => 1, 'path' => 'Test1', 'order' => 3],
+            ['id' => 2, 'path' => 'Test2', 'order' => 4],
+        ], self::getTree());
+
+        $modelClass::find(1)->moveBefore(3);
+        $this->assertEquals([
+            ['id' => 5, 'path' => 'Test5', 'order' => 0],
+            ['id' => 4, 'path' => 'Test4', 'order' => 1],
+            ['id' => 1, 'path' => 'Test1', 'order' => 2],
+            ['id' => 3, 'path' => 'Test3', 'order' => 3],
+            ['id' => 2, 'path' => 'Test2', 'order' => 4],
+        ], self::getTree());
+    }
+
+    /**
+     * @return void
+     */
+    public function testTreeableMoveBeforeOneLevelDown()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3'],
+            ['name' => 'Test4'],
+            ['name' => 'Test5']
+        ]);
+        $modelClass = static::$modelClass;
+
+        $modelClass::find(1)->moveBefore(5);
+        $this->assertEquals([
+            ['id' => 2, 'path' => 'Test2', 'order' => 0],
+            ['id' => 3, 'path' => 'Test3', 'order' => 1],
+            ['id' => 4, 'path' => 'Test4', 'order' => 2],
+            ['id' => 1, 'path' => 'Test1', 'order' => 3],
+            ['id' => 5, 'path' => 'Test5', 'order' => 4]
+        ], self::getTree());
+        
+        $modelClass::find(3)->moveBefore(5);
+        $this->assertEquals([
+            ['id' => 2, 'path' => 'Test2', 'order' => 0],
+            ['id' => 4, 'path' => 'Test4', 'order' => 1],
+            ['id' => 1, 'path' => 'Test1', 'order' => 2],
+            ['id' => 3, 'path' => 'Test3', 'order' => 3],
+            ['id' => 5, 'path' => 'Test5', 'order' => 4]
+        ], self::getTree());
+        
+        $modelClass::find(2)->moveBefore(3);
+        $this->assertEquals([
+            ['id' => 4, 'path' => 'Test4', 'order' => 0],
+            ['id' => 1, 'path' => 'Test1', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 3, 'path' => 'Test3', 'order' => 3],
+            ['id' => 5, 'path' => 'Test5', 'order' => 4],
+        ], self::getTree());
+
+        $modelClass::find(1)->moveBefore(2);
+        $this->assertEquals([
+            ['id' => 4, 'path' => 'Test4', 'order' => 0],
+            ['id' => 1, 'path' => 'Test1', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 3, 'path' => 'Test3', 'order' => 3],
+            ['id' => 5, 'path' => 'Test5', 'order' => 4],
+        ], self::getTree());
+    }
+
+    /**
+     * @return void
+     */
+    public function testTreeableMoveBeforeBetweenLevel() {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2', 'parent_id' => 1],
+            ['name' => 'Test3', 'parent_id' => 1],
+            ['name' => 'Test4', 'parent_id' => 1],
+            ['name' => 'Test5'],
+            ['name' => 'Test6', 'parent_id' => 5],
+            ['name' => 'Test7', 'parent_id' => 5],
+            ['name' => 'Test8', 'parent_id' => 5],
+            ['name' => 'Test9', 'parent_id' => 5],
+        ]);
+        $modelClass = static::$modelClass;
+
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0],
+                    ['id' => 3, 'path' => 'Test1/Test3', 'order' => 1],
+                    ['id' => 4, 'path' => 'Test1/Test4', 'order' => 2],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 3],
+                ]
+            ]
+        ], self::getTree());
+
+        $modelClass::find(6)->moveBefore(2);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test1/Test6', 'order' => 0],
+                    ['id' => 2, 'path' => 'Test1/Test2', 'order' => 1],
+                    ['id' => 3, 'path' => 'Test1/Test3', 'order' => 2],
+                    ['id' => 4, 'path' => 'Test1/Test4', 'order' => 3],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 1],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 2],
+                ]
+            ]
+        ], self::getTree());
+
+        $modelClass::find(9)->moveBefore(6);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 9, 'path' => 'Test1/Test9', 'order' => 0],
+                    ['id' => 6, 'path' => 'Test1/Test6', 'order' => 1],
+                    ['id' => 2, 'path' => 'Test1/Test2', 'order' => 2],
+                    ['id' => 3, 'path' => 'Test1/Test3', 'order' => 3],
+                    ['id' => 4, 'path' => 'Test1/Test4', 'order' => 4],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 1],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(2)->moveBefore(8);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 9, 'path' => 'Test1/Test9', 'order' => 0],
+                    ['id' => 6, 'path' => 'Test1/Test6', 'order' => 1],
+                    ['id' => 3, 'path' => 'Test1/Test3', 'order' => 2],
+                    ['id' => 4, 'path' => 'Test1/Test4', 'order' => 3],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
+                    ['id' => 2, 'path' => 'Test5/Test2', 'order' => 1],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(6)->moveBefore(8);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 9, 'path' => 'Test1/Test9', 'order' => 0],
+                    ['id' => 3, 'path' => 'Test1/Test3', 'order' => 1],
+                    ['id' => 4, 'path' => 'Test1/Test4', 'order' => 2],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
+                    ['id' => 2, 'path' => 'Test5/Test2', 'order' => 1],
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 2],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 3],
+                ]
+            ]
+        ], self::getTree());
+    }
+
+    /**
+     * @return void
+     */
+    public function testTreeableMoveBeforeDownLevel()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3'],
+            ['name' => 'Test4'],
+            ['name' => 'Test5'],
+            ['name' => 'Test6', 'parent_id' => 5],
+            ['name' => 'Test7', 'parent_id' => 5],
+            ['name' => 'Test8', 'parent_id' => 5],
+            ['name' => 'Test9', 'parent_id' => 5],
+        ]);
         $modelClass = static::$modelClass;
         
-        $modelClass::find(2)->setParent(1);
-        $modelClass::find(3)->setParent(1);
-        $modelClass::find(4)->setParent(1);
-        $modelClass::find(5)->setParent(3);
-        $modelClass::find(6)->setParent(3);
-        $modelClass::find(7)->setParent(5);
-        $modelClass::find(8)->setParent(5);
-        $modelClass::find(9)->setParent(8);
-        $modelClass::find(10)->setParent(9);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 2, 'path' => 'Test2', 'order' => 1],
+            ['id' => 3, 'path' => 'Test3', 'order' => 2],
+            ['id' => 4, 'path' => 'Test4', 'order' => 3],
+            ['id' => 5, 'path' => 'Test5', 'order' => 4,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 3],
+                ]
+            ]
+        ], self::getTree());
 
-        DB::enableQueryLog();
-        $tree = $modelClass::find(1)->getTree();
+        $modelClass::find(1)->moveBefore(6);
+        $this->assertEquals([
+            ['id' => 2, 'path' => 'Test2', 'order' => 0],
+            ['id' => 3, 'path' => 'Test3', 'order' => 1],
+            ['id' => 4, 'path' => 'Test4', 'order' => 2],
+            ['id' => 5, 'path' => 'Test5', 'order' => 3,
+                'childs' => [
+                    ['id' => 1, 'path' => 'Test5/Test1', 'order' => 0],
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 1],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 2],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 3],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 4],
+                ]
+            ]
+        ], self::getTree());
         
-        $this->assertEquals(2, $tree[0]['model']->id);
-        $this->assertEquals(3, $tree[1]['model']->id);
-        $this->assertEquals(5, $tree[1]['childs'][0]['model']->id);
-        $this->assertEquals(6, $tree[1]['childs'][1]['model']->id);
-        $this->assertEquals(7, $tree[1]['childs'][0]['childs'][0]['model']->id);
-        $this->assertEquals(8, $tree[1]['childs'][0]['childs'][1]['model']->id);
-        $this->assertEquals(9, $tree[1]['childs'][0]['childs'][1]['childs'][0]['model']->id);
-        $this->assertEquals(10, $tree[1]['childs'][0]['childs'][1]['childs'][0]['childs'][0]['model']->id);
-        $this->assertEquals(4, $tree[2]['model']->id);
+        $modelClass::find(2)->moveBefore(9);
+        $this->assertEquals([
+            ['id' => 3, 'path' => 'Test3', 'order' => 0],
+            ['id' => 4, 'path' => 'Test4', 'order' => 1],
+            ['id' => 5, 'path' => 'Test5', 'order' => 2,
+                'childs' => [
+                    ['id' => 1, 'path' => 'Test5/Test1', 'order' => 0],
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 1],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 2],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 3],
+                    ['id' => 2, 'path' => 'Test5/Test2', 'order' => 4],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 5],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(4)->moveBefore(1);
+        $this->assertEquals([
+            ['id' => 3, 'path' => 'Test3', 'order' => 0],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1,
+                'childs' => [
+                    ['id' => 4, 'path' => 'Test5/Test4', 'order' => 0],
+                    ['id' => 1, 'path' => 'Test5/Test1', 'order' => 1],
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 2],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 3],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 4],
+                    ['id' => 2, 'path' => 'Test5/Test2', 'order' => 5],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 6],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(3)->moveBefore(8);
+        $this->assertEquals([
+            ['id' => 5, 'path' => 'Test5', 'order' => 0,
+                'childs' => [
+                    ['id' => 4, 'path' => 'Test5/Test4', 'order' => 0],
+                    ['id' => 1, 'path' => 'Test5/Test1', 'order' => 1],
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 2],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 3],
+                    ['id' => 3, 'path' => 'Test5/Test3', 'order' => 4],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 5],
+                    ['id' => 2, 'path' => 'Test5/Test2', 'order' => 6],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 7],
+                ]
+            ]
+        ], self::getTree());
+    }
 
-        $childs = $modelClass::find(1)->getChilds();
-        $this->assertEquals(3, $childs->count());
-        $this->assertEquals(2, $childs[0]->id);
-        $this->assertEquals(3, $childs[1]->id);
-        $this->assertEquals(4, $childs[2]->id);
+    /**
+     * @return void
+     */
+    public function testTreeableMoveBeforeUpLevel()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3'],
+            ['name' => 'Test4'],
+            ['name' => 'Test5', 'parent_id' => 4],
+            ['name' => 'Test6', 'parent_id' => 4],
+            ['name' => 'Test7', 'parent_id' => 4],
+            ['name' => 'Test8', 'parent_id' => 4],
+            ['name' => 'Test9', 'parent_id' => 4],
+        ]);
+        $modelClass = static::$modelClass;
+        
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 2, 'path' => 'Test2', 'order' => 1],
+            ['id' => 3, 'path' => 'Test3', 'order' => 2],
+            ['id' => 4, 'path' => 'Test4', 'order' => 3,
+                'childs' => [
+                    ['id' => 5, 'path' => 'Test4/Test5', 'order' => 0],
+                    ['id' => 6, 'path' => 'Test4/Test6', 'order' => 1],
+                    ['id' => 7, 'path' => 'Test4/Test7', 'order' => 2],
+                    ['id' => 8, 'path' => 'Test4/Test8', 'order' => 3],
+                    ['id' => 9, 'path' => 'Test4/Test9', 'order' => 4],
+                ]
+            ]
+        ], self::getTree());
 
-        $childs = $modelClass::find(3)->getChilds();
-        $this->assertEquals(2, $childs->count());
-        $this->assertEquals(5, $childs[0]->id);
-        $this->assertEquals(6, $childs[1]->id);
+        $modelClass::find(5)->moveBefore(1);
+        $this->assertEquals([
+            ['id' => 5, 'path' => 'Test5', 'order' => 0],
+            ['id' => 1, 'path' => 'Test1', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 3, 'path' => 'Test3', 'order' => 3],
+            ['id' => 4, 'path' => 'Test4', 'order' => 4,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test4/Test6', 'order' => 0],
+                    ['id' => 7, 'path' => 'Test4/Test7', 'order' => 1],
+                    ['id' => 8, 'path' => 'Test4/Test8', 'order' => 2],
+                    ['id' => 9, 'path' => 'Test4/Test9', 'order' => 3],
+                ]
+            ]
+        ], self::getTree());
 
-        $childs = $modelClass::find(5)->getChilds();
-        $this->assertEquals(2, $childs->count());
-        $this->assertEquals(7, $childs[0]->id);
-        $this->assertEquals(8, $childs[1]->id);
+        $modelClass::find(6)->moveBefore(4);
+        $this->assertEquals([
+            ['id' => 5, 'path' => 'Test5', 'order' => 0],
+            ['id' => 1, 'path' => 'Test1', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 3, 'path' => 'Test3', 'order' => 3],
+            ['id' => 6, 'path' => 'Test6', 'order' => 4],
+            ['id' => 4, 'path' => 'Test4', 'order' => 5,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test4/Test7', 'order' => 0],
+                    ['id' => 8, 'path' => 'Test4/Test8', 'order' => 1],
+                    ['id' => 9, 'path' => 'Test4/Test9', 'order' => 2],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(8)->moveBefore(3);
+        $this->assertEquals([
+            ['id' => 5, 'path' => 'Test5', 'order' => 0],
+            ['id' => 1, 'path' => 'Test1', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 8, 'path' => 'Test8', 'order' => 3],
+            ['id' => 3, 'path' => 'Test3', 'order' => 4],
+            ['id' => 6, 'path' => 'Test6', 'order' => 5],
+            ['id' => 4, 'path' => 'Test4', 'order' => 6,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test4/Test7', 'order' => 0],
+                    ['id' => 9, 'path' => 'Test4/Test9', 'order' => 1],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(9)->moveBefore(5);
+        $this->assertEquals([
+            ['id' => 9, 'path' => 'Test9', 'order' => 0],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1],
+            ['id' => 1, 'path' => 'Test1', 'order' => 2],
+            ['id' => 2, 'path' => 'Test2', 'order' => 3],
+            ['id' => 8, 'path' => 'Test8', 'order' => 4],
+            ['id' => 3, 'path' => 'Test3', 'order' => 5],
+            ['id' => 6, 'path' => 'Test6', 'order' => 6],
+            ['id' => 4, 'path' => 'Test4', 'order' => 7,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test4/Test7', 'order' => 0],
+                ]
+            ]
+        ], self::getTree());
 
-        $childs = $modelClass::find(8)->getChilds();
-        $this->assertEquals(1, $childs->count());
-        $this->assertEquals(9, $childs[0]->id);
+        $modelClass::find(7)->moveBefore(4);
+        $this->assertEquals([
+            ['id' => 9, 'path' => 'Test9', 'order' => 0],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1],
+            ['id' => 1, 'path' => 'Test1', 'order' => 2],
+            ['id' => 2, 'path' => 'Test2', 'order' => 3],
+            ['id' => 8, 'path' => 'Test8', 'order' => 4],
+            ['id' => 3, 'path' => 'Test3', 'order' => 5],
+            ['id' => 6, 'path' => 'Test6', 'order' => 6],
+            ['id' => 7, 'path' => 'Test7', 'order' => 7],
+            ['id' => 4, 'path' => 'Test4', 'order' => 8],
+        ], self::getTree());        
+    }
+    
+    /**
+     * @return void
+     */
+    public function testTreeableMoveAfterOneLevelUp()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3'],
+            ['name' => 'Test4'],
+            ['name' => 'Test5']
+        ]);
+        $modelClass = static::$modelClass;
 
-        $childs = $modelClass::find(9)->getChilds();
-        $this->assertEquals(1, $childs->count());
-        $this->assertEquals(10, $childs[0]->id);
+        $modelClass::find(1)->moveAfter(5);
+        $this->assertEquals([
+            ['id' => 2, 'path' => 'Test2', 'order' => 0],
+            ['id' => 3, 'path' => 'Test3', 'order' => 1],
+            ['id' => 4, 'path' => 'Test4', 'order' => 2],
+            ['id' => 5, 'path' => 'Test5', 'order' => 3],
+            ['id' => 1, 'path' => 'Test1', 'order' => 4],
+        ], self::getTree());
+        
+        $modelClass::find(3)->moveAfter(1);
+        $this->assertEquals([
+            ['id' => 2, 'path' => 'Test2', 'order' => 0],
+            ['id' => 4, 'path' => 'Test4', 'order' => 1],
+            ['id' => 5, 'path' => 'Test5', 'order' => 2],
+            ['id' => 1, 'path' => 'Test1', 'order' => 3],
+            ['id' => 3, 'path' => 'Test3', 'order' => 4],
+        ], self::getTree());
+        
+        $modelClass::find(1)->moveAfter(3);
+        $this->assertEquals([
+            ['id' => 2, 'path' => 'Test2', 'order' => 0],
+            ['id' => 4, 'path' => 'Test4', 'order' => 1],
+            ['id' => 5, 'path' => 'Test5', 'order' => 2],
+            ['id' => 3, 'path' => 'Test3', 'order' => 3],
+            ['id' => 1, 'path' => 'Test1', 'order' => 4],
+        ], self::getTree());
 
-        $childs = $modelClass::find(10)->getChilds();
-        $this->assertEquals(0, $childs->count());
+        $modelClass::find(1)->moveAfter(3);
+        $this->assertEquals([
+            ['id' => 2, 'path' => 'Test2', 'order' => 0],
+            ['id' => 4, 'path' => 'Test4', 'order' => 1],
+            ['id' => 5, 'path' => 'Test5', 'order' => 2],
+            ['id' => 3, 'path' => 'Test3', 'order' => 3],
+            ['id' => 1, 'path' => 'Test1', 'order' => 4],
+        ], self::getTree());
+    }
 
-        $this->assertEquals(8, count(DB::getQueryLog()));
+    /**
+     * @return void
+     */
+    public function testTreeableMoveAfterOneLevelDown()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3'],
+            ['name' => 'Test4'],
+            ['name' => 'Test5']
+        ]);
+        $modelClass = static::$modelClass;
+
+        $modelClass::find(5)->moveAfter(1);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 3, 'path' => 'Test3', 'order' => 3],
+            ['id' => 4, 'path' => 'Test4', 'order' => 4],
+        ], self::getTree());
+        
+        $modelClass::find(3)->moveAfter(1);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 3, 'path' => 'Test3', 'order' => 1],
+            ['id' => 5, 'path' => 'Test5', 'order' => 2],
+            ['id' => 2, 'path' => 'Test2', 'order' => 3],
+            ['id' => 4, 'path' => 'Test4', 'order' => 4],
+        ], self::getTree());
+        
+        $modelClass::find(2)->moveAfter(3);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 3, 'path' => 'Test3', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 5, 'path' => 'Test5', 'order' => 3],
+            ['id' => 4, 'path' => 'Test4', 'order' => 4],
+        ], self::getTree());
+
+        $modelClass::find(3)->moveAfter(1);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 3, 'path' => 'Test3', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 5, 'path' => 'Test5', 'order' => 3],
+            ['id' => 4, 'path' => 'Test4', 'order' => 4],
+        ], self::getTree());
+    }
+
+    /**
+     * @return void
+     */
+    public function testTreeableMoveAfterDownLevel() {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3'],
+            ['name' => 'Test4'],
+            ['name' => 'Test5'],
+            ['name' => 'Test6', 'parent_id' => 5],
+            ['name' => 'Test7', 'parent_id' => 5],
+            ['name' => 'Test8', 'parent_id' => 5],
+            ['name' => 'Test9', 'parent_id' => 5],
+        ]);
+        $modelClass = static::$modelClass;
+
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 2, 'path' => 'Test2', 'order' => 1],
+            ['id' => 3, 'path' => 'Test3', 'order' => 2],
+            ['id' => 4, 'path' => 'Test4', 'order' => 3],
+            ['id' => 5, 'path' => 'Test5', 'order' => 4,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 3],
+                ]
+            ]
+                ], self::getTree());
+
+        $modelClass::find(1)->moveAfter(9);
+        $this->assertEquals([
+            ['id' => 2, 'path' => 'Test2', 'order' => 0],
+            ['id' => 3, 'path' => 'Test3', 'order' => 1],
+            ['id' => 4, 'path' => 'Test4', 'order' => 2],
+            ['id' => 5, 'path' => 'Test5', 'order' => 3,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 3],
+                    ['id' => 1, 'path' => 'Test5/Test1', 'order' => 4],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(4)->moveAfter(1);
+        $this->assertEquals([
+            ['id' => 2, 'path' => 'Test2', 'order' => 0],
+            ['id' => 3, 'path' => 'Test3', 'order' => 1],
+            ['id' => 5, 'path' => 'Test5', 'order' => 2,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 3],
+                    ['id' => 1, 'path' => 'Test5/Test1', 'order' => 4],
+                    ['id' => 4, 'path' => 'Test5/Test4', 'order' => 5],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(2)->moveAfter(6);
+        $this->assertEquals([
+            ['id' => 3, 'path' => 'Test3', 'order' => 0],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
+                    ['id' => 2, 'path' => 'Test5/Test2', 'order' => 1],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 2],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 3],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 4],
+                    ['id' => 1, 'path' => 'Test5/Test1', 'order' => 5],
+                    ['id' => 4, 'path' => 'Test5/Test4', 'order' => 6],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(3)->moveAfter(8);
+        $this->assertEquals([
+            ['id' => 5, 'path' => 'Test5', 'order' => 0,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
+                    ['id' => 2, 'path' => 'Test5/Test2', 'order' => 1],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 2],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 3],
+                    ['id' => 3, 'path' => 'Test5/Test3', 'order' => 4],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 5],
+                    ['id' => 1, 'path' => 'Test5/Test1', 'order' => 6],
+                    ['id' => 4, 'path' => 'Test5/Test4', 'order' => 7],
+                ]
+            ]
+        ], self::getTree());        
+    }
+
+    /**
+     * @return void
+     */
+    public function testTreeableMoveAfterBetweenLevel() {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2', 'parent_id' => 1],
+            ['name' => 'Test3', 'parent_id' => 1],
+            ['name' => 'Test4', 'parent_id' => 1],
+            ['name' => 'Test5'],
+            ['name' => 'Test6', 'parent_id' => 5],
+            ['name' => 'Test7', 'parent_id' => 5],
+            ['name' => 'Test8', 'parent_id' => 5],
+            ['name' => 'Test9', 'parent_id' => 5],
+        ]);
+        $modelClass = static::$modelClass;
+
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0],
+                    ['id' => 3, 'path' => 'Test1/Test3', 'order' => 1],
+                    ['id' => 4, 'path' => 'Test1/Test4', 'order' => 2],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 3],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(2)->moveAfter(9);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 3, 'path' => 'Test1/Test3', 'order' => 0],
+                    ['id' => 4, 'path' => 'Test1/Test4', 'order' => 1],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 3],
+                    ['id' => 2, 'path' => 'Test5/Test2', 'order' => 4],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(6)->moveAfter(3);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 3, 'path' => 'Test1/Test3', 'order' => 0],
+                    ['id' => 6, 'path' => 'Test1/Test6', 'order' => 1],
+                    ['id' => 4, 'path' => 'Test1/Test4', 'order' => 2],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 1],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 2],
+                    ['id' => 2, 'path' => 'Test5/Test2', 'order' => 3],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(2)->moveAfter(4);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 3, 'path' => 'Test1/Test3', 'order' => 0],
+                    ['id' => 6, 'path' => 'Test1/Test6', 'order' => 1],
+                    ['id' => 4, 'path' => 'Test1/Test4', 'order' => 2],
+                    ['id' => 2, 'path' => 'Test1/Test2', 'order' => 3],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
+                    ['id' => 8, 'path' => 'Test5/Test8', 'order' => 1],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 2],
+                ]
+            ]
+        ], self::getTree());
+        
+        $modelClass::find(8)->moveAfter(6);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 3, 'path' => 'Test1/Test3', 'order' => 0],
+                    ['id' => 6, 'path' => 'Test1/Test6', 'order' => 1],
+                    ['id' => 8, 'path' => 'Test1/Test8', 'order' => 2],
+                    ['id' => 4, 'path' => 'Test1/Test4', 'order' => 3],
+                    ['id' => 2, 'path' => 'Test1/Test2', 'order' => 4],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 1,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
+                    ['id' => 9, 'path' => 'Test5/Test9', 'order' => 1],
+                ]
+            ]
+        ], self::getTree());        
+    }
+
+    /**
+     * @return void
+     */
+    public function testTreeableMoveAfterUpLevel()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3'],
+            ['name' => 'Test4'],
+            ['name' => 'Test5', 'parent_id' => 4],
+            ['name' => 'Test6', 'parent_id' => 4],
+            ['name' => 'Test7', 'parent_id' => 4],
+            ['name' => 'Test8', 'parent_id' => 4],
+            ['name' => 'Test9', 'parent_id' => 4],
+        ]);
+        $modelClass = static::$modelClass;
+        
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 2, 'path' => 'Test2', 'order' => 1],
+            ['id' => 3, 'path' => 'Test3', 'order' => 2],
+            ['id' => 4, 'path' => 'Test4', 'order' => 3,
+                'childs' => [
+                    ['id' => 5, 'path' => 'Test4/Test5', 'order' => 0],
+                    ['id' => 6, 'path' => 'Test4/Test6', 'order' => 1],
+                    ['id' => 7, 'path' => 'Test4/Test7', 'order' => 2],
+                    ['id' => 8, 'path' => 'Test4/Test8', 'order' => 3],
+                    ['id' => 9, 'path' => 'Test4/Test9', 'order' => 4],
+                ]
+            ]
+        ], self::getTree());
+
+        $modelClass::find(5)->moveAfter(4);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 2, 'path' => 'Test2', 'order' => 1],
+            ['id' => 3, 'path' => 'Test3', 'order' => 2],
+            ['id' => 4, 'path' => 'Test4', 'order' => 3,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test4/Test6', 'order' => 0],
+                    ['id' => 7, 'path' => 'Test4/Test7', 'order' => 1],
+                    ['id' => 8, 'path' => 'Test4/Test8', 'order' => 2],
+                    ['id' => 9, 'path' => 'Test4/Test9', 'order' => 3],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 4],
+        ], self::getTree());
+
+        $modelClass::find(6)->moveAfter(1);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 6, 'path' => 'Test6', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 3, 'path' => 'Test3', 'order' => 3],
+            ['id' => 4, 'path' => 'Test4', 'order' => 4,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test4/Test7', 'order' => 0],
+                    ['id' => 8, 'path' => 'Test4/Test8', 'order' => 1],
+                    ['id' => 9, 'path' => 'Test4/Test9', 'order' => 2],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 5],
+        ], self::getTree());
+        
+        $modelClass::find(9)->moveAfter(5);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 6, 'path' => 'Test6', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 3, 'path' => 'Test3', 'order' => 3],
+            ['id' => 4, 'path' => 'Test4', 'order' => 4,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test4/Test7', 'order' => 0],
+                    ['id' => 8, 'path' => 'Test4/Test8', 'order' => 1],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 5],
+            ['id' => 9, 'path' => 'Test9', 'order' => 6],
+        ], self::getTree());
+        
+        $modelClass::find(8)->moveAfter(2);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 6, 'path' => 'Test6', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 8, 'path' => 'Test8', 'order' => 3],
+            ['id' => 3, 'path' => 'Test3', 'order' => 4],
+            ['id' => 4, 'path' => 'Test4', 'order' => 5,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Test4/Test7', 'order' => 0],
+                ]
+            ],
+            ['id' => 5, 'path' => 'Test5', 'order' => 6],
+            ['id' => 9, 'path' => 'Test9', 'order' => 7],
+        ], self::getTree());
+
+        $modelClass::find(7)->moveAfter(4);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 6, 'path' => 'Test6', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+            ['id' => 8, 'path' => 'Test8', 'order' => 3],
+            ['id' => 3, 'path' => 'Test3', 'order' => 4],
+            ['id' => 4, 'path' => 'Test4', 'order' => 5],
+            ['id' => 7, 'path' => 'Test7', 'order' => 6],
+            ['id' => 5, 'path' => 'Test5', 'order' => 7],
+            ['id' => 9, 'path' => 'Test9', 'order' => 8],
+        ], self::getTree());
     }
 
 }

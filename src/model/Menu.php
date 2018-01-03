@@ -7,15 +7,16 @@ use Illuminate\Support\Facades\Request;
 class Menu extends Model
 {
     use SoftDeletes;
-    use Traits\Sortable;
+   // use Traits\Sortable;
     use Traits\Treeable;
-    use Traits\Path;
+    //use Traits\Path;
     use Traits\Act;
 
     protected $table = 'menu';
     protected $visible = [
         'id',
         'parent_id',
+        'order',
         'name',
         'content',
         'path'

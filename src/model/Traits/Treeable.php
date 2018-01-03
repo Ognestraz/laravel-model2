@@ -1,59 +1,190 @@
 <?php namespace Model\Traits;
 
 use DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 
 trait Treeable
 {
     protected $tree;
-    protected static $listTree;
-    protected static $parentTree;
+    protected static $listTree = [];
+    protected static $parentTree = [];
+    protected $simpleTree = [];
+
+    public static function resetTree()
+    {
+        self::$parentTree = null;
+    }
+
+    static public function findPath($path)
+    {
+        return self::where('path', $path);
+    }
+
+    public function endPath()
+    {
+        $part = explode('/', $this->path);
+        return end($part);
+    }    
+
+    protected static function treeableDefaultOrder($model)
+    {
+        if ([] === $model->getOriginal()) {
+            $maxOrder = self::where('parent_id', 0)->max('order');
+            if (null === $maxOrder) {
+                $model->order = 0;
+                return ;
+            }
+            $model->order = $maxOrder + 1;
+        }        
+    }
+
+    protected static function treeableReOrderParentId($model)
+    {
+        $oldParentId = $model->getOriginal('parent_id');
+        if (null !== $oldParentId && $model->parent_id !== $oldParentId) {
+            if ($model->brothers()->count()) {
+                $model->brothers()
+                    ->where('order', '>=', $model->order)
+                    ->update([
+                        'order' => DB::raw('`order` + 1')
+                    ]);
+            } else {
+                $model->order = 0;
+            }            
+            
+            self::where('parent_id', (int)$oldParentId)
+                    ->where('order', '>', $model->getOriginal('order'))
+                    ->update([
+                        'order' => DB::raw('`order` - 1')
+            ]);
+            return;
+        }
+        
+        if ($model->parent_id) {
+            $parent = self::find($model->parent_id);
+            $order = 0;
+            if (null !== $parent && 0 !== $parent->childs()->count()) {
+                $order = $parent->childs()->max('order') + 1;
+            }
+        } else {
+            $order = 0;
+            if (self::where('parent_id', 0)->count()) {
+                $order = self::where('parent_id', 0)->max('order') + 1;
+            }
+        }
+        $model->order = $order;
+    }    
+    
+    protected static function treeableReOrderOrder($model) {
+        if ([] === $model->getOriginal()) {
+            return ;
+        }
+
+        $oldOrder = $model->getOriginal('order') ?: 0;
+        if ($model->order < $oldOrder) {
+            $model->brothers()
+                ->where('order', '>=', $model->order)
+                ->where('order', '<=', $oldOrder)
+                ->update([
+                    'order' => DB::raw('`order` + 1')
+                ]);
+        } else {
+            $model->brothers()
+                ->where('order', '>', $oldOrder)
+                ->where('order', '<=', $model->order)
+                ->update([
+                    'order' => DB::raw('`order` - 1')
+                ]);
+        }
+    }
+
+    protected static function treeableDefaultPath($model) {
+        if (null === $model->path) {
+            $model->path = $model->name;
+        }
+    }
+
+    protected static function treeableRePathParentId($model) {
+        $path = $model->endPath();
+        if ($model->parent_id) {
+            $parent = $model->getParent();
+            if ($parent->path) {
+                $model->path = ('/' !== $parent->path) ? $parent->path . '/' . $path : '/' . $path;
+            } elseif ($path) {
+                $model->path = $path;
+            }
+
+            $oldParent = self::find($model->getOriginal('parent_id'));
+            $oldParentPath = '';
+            if (null !== $oldParent) {
+                $oldParentPath = $oldParent->path;
+            }
+
+            foreach ($model->childs()->get() as $item) {
+                $item->path = substr_replace($item->path, $parent->path, 0, strlen($oldParentPath));
+                Log::info('Item path', [$item->toArray(), $item->getOriginal()]);
+                $item->save();
+            }
+
+        } elseif ($path) {
+            $model->path = $path;                    
+        }
+    }
+    
+    protected static function treeableRePathChilds($model) {
+        if ([] === $model->getOriginal()) {
+            return ;
+        }
+        foreach ($model->childs()->get() as $item) {
+            $item->path = $model->path . '/' . $item->endPath();
+            $item->save();
+        }
+    }    
+
+    public function scopeSort($query, $by = 'asc')
+    {
+        return $query->orderBy('order', $by);
+    }    
+    
+    protected static function treeableOrderShift($model)
+    {
+        $i = 0;
+        foreach ($model->brothers()->sort()->get() as $m) {
+            $m->order = $i++;
+            $m->save();
+        }        
+    }    
+    
+    protected static function treeableEventSaving($model)
+    {
+        self::treeableDefaultPath($model);
+        self::treeableDefaultOrder($model);
+
+        if (true === $model->isDirty('parent_id')) {
+            self::treeableReOrderParentId($model);
+            self::treeableRePathParentId($model);
+        } elseif (true === $model->isDirty('order')) {
+            self::treeableReOrderOrder($model);
+        }
+
+        if (true === $model->isDirty('path') && true !== $model->isDirty('parent_id')) {
+            self::treeableRePathChilds($model);
+        }        
+    }
 
     protected static function bootTreeable()
     {
-        static::saving(function($model) {
-            if (true === $model->isDirty('parent_id')) {
-                $oldParentId = $model->getOriginal('parent_id');
-                if (!empty($oldParentId)) {
-                    $model->brothers()
-                        ->where('order', '>=', $model->order)
-                        ->update([
-                            'order' => DB::raw('`order` + 1')
-                        ]);
-                    self::find($oldParentId)->childs()
-                        ->where('order', '>', $model->getOriginal('order'))
-                        ->update([
-                            'order' => DB::raw('`order` - 1')
-                        ]);
-                } else {
-                    $parent = self::find($model->parent_id);
-                    $order = 0;
-                    if (null !== $parent && 0 !== $parent->childs()->count()) {
-                        $order = $parent->childs()->max('order') + 1;
-                    }
-                    $model->order = $order;
-                }
-            } elseif (true === $model->isDirty('order')) {
-                $oldOrder = $model->getOriginal('order');
-                if ($model->order < $oldOrder) {
-                    $model->brothers()
-                        ->where('order', '>=', $model->order)
-                        ->where('order', '<=', $oldOrder)
-                        ->update([
-                            'order' => DB::raw('`order` + 1')
-                        ]);
-                } else {
-                    $model->brothers()
-                        ->where('order', '>', $oldOrder)
-                        ->where('order', '<=', $model->order)
-                        ->update([
-                            'order' => DB::raw('`order` - 1')
-                        ]);
-                }
-            }                
+        static::creating(function($model) {
+            static::treeableEventSaving($model);
+        });
+
+        static::updating(function($model) {
+            static::treeableEventSaving($model);
         });
 
         self::deleted(function($model) {
+            static::treeableOrderShift($model);
+
             $model->childs()->get()->each(function($model) {
                 $model->delete();
             });
@@ -67,7 +198,7 @@ trait Treeable
 
     public function childs()
     {
-        return self::where('parent_id', $this->id ?: 0);
+        return self::where('parent_id', $this->id);
     }
 
     public function getChilds()
@@ -142,30 +273,33 @@ trait Treeable
         return collect(array_reverse($list));
     }
 
-    protected function _branch($id, &$b, $model = false)
+    protected function _branch($id, &$b)
     {
         if ($id) {
-            //$b['id'] = $this->listTree[$id]->id;
-            if (!$model) {
-                $fieldsTree = array_merge($this->mainFieldsTree, $this->addFieldsTree);
-                foreach ($fieldsTree as $val) {
-                    $b[$val] = static::$listTree[$id]->$val;
-                }
-            } else {
-                $b['model'] = static::$listTree[$id];
+            if (null === $b) {
+                $b = [];
             }
+
+            $f = static::$listTree[$id];
+            $b = array_merge($b, [
+                'id' => $f['id'],
+                'path' => $f['path'],
+                'order' => (int)$f['order'],
+            ]);
         }
 
         if (isset(static::$parentTree[$id])) {
             foreach (static::$parentTree[$id] as $k => $child) {
-                $this->_branch($child, $b['childs'][$k], $model);
+                $this->_branch($child, $b['childs'][$k]);
             }
         }
-    }
-
-    public function createTree($model = false)
+    }    
+    
+    public function createTree()
     {
-        $this->tree = array();
+        $this->tree = [];
+        static::$listTree = [];
+        static::$parentTree = [];
 
         $list = self::newQuery()->orderBy('parent_id','asc')
             ->orderBy('order','asc')
@@ -178,16 +312,20 @@ trait Treeable
 
         if (!empty(static::$parentTree[0]) && is_array(static::$parentTree[0])) {
             foreach (static::$parentTree[0] as $k => $item) {
-                $this->_branch($item, $this->tree[$k], $model);
+                $this->_branch($item, $this->tree[$k]);
             }
-        }
-        
+        }        
+
         return $this->tree;
     }
     
     public function getTree()
     {
-        $tree = $this->createTree(true);
+        $tree = $this->createTree();
+        if (null === $this->id) {
+            return $tree;
+        }
+
         return $this->_findChildrenTree($this->id, $tree);
     }
 
@@ -195,18 +333,17 @@ trait Treeable
     {
         foreach ($tree as $k => $v) {
             if (!empty($v['childs'])) {
-                if ($v['model']->id == $id) {
+                if ($v['id'] == $id) {
                     return $v['childs'];
                 } else {
                     $branch = $this->_findChildrenTree($id, $v['childs']);
                     if ($branch) {
                         return $branch;
-                    }                    
+                    }       
                 }
             }
         }
 
         return [];
     }
-
 }

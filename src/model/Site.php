@@ -6,9 +6,9 @@ class Site extends Model
 {
     //use SoftDeletes, Traits\Menu, Traits\Tree, Traits\Path;
     //use Traits\Act;
-    use Traits\Sortable;
+    //use Traits\Sortable;
     use Traits\Treeable;
-    use Traits\Path;
+    //use Traits\Path;
     use Traits\Menu;
 
     static public $site = null;
