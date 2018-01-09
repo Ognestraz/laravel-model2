@@ -12,25 +12,36 @@ trait Menuable
         return $this->morphMany(\Model\Menu::class, 'menuable');
     }
 
-    public function addToMenu($id)
+    public function addMenu($id)
     {
-        $menu = Menu::find($id);
-//        $newMenu = new Menu();
-//        $newMenu->name = $this->name;
-//        $newMenu->parent_id = $menu->id;
-//        $newMenu->save();
-//        
-//        $newMenu->path = $this->path;
-//        $newMenu->save();
-        
         $newMenu = $this->menu()->create([
             'name' => $this->name,
-           // 'path' => $this->path,
-            'parent_id' => $menu->id
+            'parent_id' => $id
         ]);
-        //print_r($newMenu->getAttributes());
+
         $newMenu->path = $this->path;
         $newMenu->save();        
-        
+    }
+
+    public function syncMenu($ids)
+    {
+        $nowMenu = $this->menu;
+        $nowMenuList = [];
+        $nowMenuListKey = [];
+        if (null !== $nowMenu) {
+            $nowMenuList = $nowMenu->pluck('id', 'parent_id')->toArray();
+            $nowMenuListKey = array_keys($nowMenuList);
+        }
+
+        $attachMenus = array_diff($ids, $nowMenuListKey);
+        $detachMenus = array_diff($nowMenuListKey, $ids);
+
+        foreach ($attachMenus as $menuId) {
+            $this->addMenu($menuId);
+        }
+
+        foreach ($detachMenus as $menuId) {
+            Menu::find($nowMenuList[$menuId])->delete();
+        }
     }
 }

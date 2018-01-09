@@ -50,7 +50,7 @@ trait Menuable
             ['id' => 1, 'path' => 'Site1', 'order' => 0]
         ], self::getTree(null, Site::class));
 
-        Site::find(1)->addToMenu(1);
+        Site::find(1)->addMenu(1);
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0,
                 'childs' => [
@@ -63,7 +63,7 @@ trait Menuable
         $this->assertEquals(null, Menu::find(1)->menuable);
         $this->assertEquals(1, Menu::find(2)->menuable->id);
 
-        $this->assertEquals(20, count(DB::getQueryLog()));
+        $this->assertEquals(19, count(DB::getQueryLog()));
     }
     
     
@@ -87,8 +87,8 @@ trait Menuable
             ['id' => 1, 'path' => 'Site1', 'order' => 0]
         ], self::getTree(null, Site::class));
 
-        Site::find(1)->addToMenu(1);
-        Site::find(1)->addToMenu(2);
+        Site::find(1)->addMenu(1);
+        Site::find(1)->addMenu(2);
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0,
                 'childs' => [
@@ -108,7 +108,7 @@ trait Menuable
         $this->assertEquals(1, Menu::find(3)->menuable->id);   
         $this->assertEquals(1, Menu::find(4)->menuable->id);        
 
-        $this->assertEquals(34, count(DB::getQueryLog()));
+        $this->assertEquals(32, count(DB::getQueryLog()));
     }
     
     /**
@@ -132,8 +132,8 @@ trait Menuable
             ['id' => 1, 'path' => 'Site1', 'order' => 0]
         ], self::getTree(null, Site::class));
 
-        Site::find(1)->addToMenu(1);
-        Site::find(1)->addToMenu(3);
+        Site::find(1)->addMenu(1);
+        Site::find(1)->addMenu(3);
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0,
                 'childs' => [
@@ -155,7 +155,7 @@ trait Menuable
         $this->assertEquals(1, Menu::find(4)->menuable->id);
         $this->assertEquals(1, Menu::find(5)->menuable->id);
         
-        $this->assertEquals(43, count(DB::getQueryLog()));
+        $this->assertEquals(41, count(DB::getQueryLog()));
     }
 
     /**
@@ -184,8 +184,8 @@ trait Menuable
             ['id' => 2, 'path' => 'Site2', 'order' => 1],
         ], self::getTree(null, Site::class));
 
-        Site::find(1)->addToMenu(1);
-        Site::find(3)->addToMenu(2);
+        Site::find(1)->addMenu(1);
+        Site::find(3)->addMenu(2);
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0,
                 'childs' => [
@@ -204,7 +204,7 @@ trait Menuable
         $this->assertEquals(1, Menu::find(2)->menuable->id);
         $this->assertEquals(3, Menu::find(3)->menuable->id);
 
-        $this->assertEquals(42, count(DB::getQueryLog()));
+        $this->assertEquals(40, count(DB::getQueryLog()));
     }
 
     /**
@@ -244,22 +244,22 @@ trait Menuable
             ],
         ], self::getTree(null, Site::class));
 
-        Site::find(1)->addToMenu(1);
-        Site::find(4)->addToMenu(4);
-        Site::find(5)->addToMenu(4);
-        Site::find(2)->addToMenu(1);
-        Site::find(3)->addToMenu(1);
-        Site::find(6)->addToMenu(8);
+        Site::find(1)->addMenu(1);
+        Site::find(4)->addMenu(4);
+        Site::find(5)->addMenu(4);
+        Site::find(2)->addMenu(1);
+        Site::find(3)->addMenu(1);
+        Site::find(6)->addMenu(8);
 
-        Site::find(4)->addToMenu(2);
-        Site::find(5)->addToMenu(2);
-        Site::find(6)->addToMenu(2);
+        Site::find(4)->addMenu(2);
+        Site::find(5)->addMenu(2);
+        Site::find(6)->addMenu(2);
         
-        Site::find(6)->addToMenu(3);
-        Site::find(2)->addToMenu(13);
-        Site::find(5)->addToMenu(13);
-        Site::find(3)->addToMenu(15);
-        Site::find(2)->addToMenu(3);
+        Site::find(6)->addMenu(3);
+        Site::find(2)->addMenu(13);
+        Site::find(5)->addMenu(13);
+        Site::find(3)->addMenu(15);
+        Site::find(2)->addMenu(3);
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0,
                 'childs' => [
@@ -312,6 +312,117 @@ trait Menuable
         $this->assertEquals(null, Menu::find(3)->menuable);
         $this->assertEquals(1, Menu::find(4)->menuable->id);
         
-        $this->assertEquals(200, count(DB::getQueryLog()));
-    }    
+        $this->assertEquals(186, count(DB::getQueryLog()));
+    }
+
+    /**
+     *
+     * @return void
+     */
+    public function testMenuableOneSiteSyncMenu()
+    {
+        DB::enableQueryLog();
+        self::buildTree([
+            ['name' => 'Menu1', 'path' => ''],
+            ['name' => 'Menu2', 'path' => ''],
+            ['name' => 'Menu3', 'path' => ''],
+            ['name' => 'Menu4', 'path' => ''],
+            ['name' => 'Menu5', 'path' => ''],
+        ], Menu::class);
+
+        self::buildTree([
+            ['name' => 'Site1']
+        ], Site::class);
+
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Site1', 'order' => 0]
+        ], self::getTree(null, Site::class));
+
+        Site::find(1)->syncMenu([1, 2, 3]);
+        $this->assertEquals([
+            ['id' => 1, 'path' => '', 'order' => 0,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Site1', 'order' => 0],
+                ]
+            ],
+            ['id' => 2, 'path' => '', 'order' => 1,
+                'childs' => [
+                    ['id' => 7, 'path' => 'Site1', 'order' => 0],
+                ]
+            ],
+            ['id' => 3, 'path' => '', 'order' => 2,
+                'childs' => [
+                    ['id' => 8, 'path' => 'Site1', 'order' => 0],
+                ]
+            ],
+            ['id' => 4, 'path' => '', 'order' => 3],
+            ['id' => 5, 'path' => '', 'order' => 4],
+        ], self::getTree(null, Menu::class));
+
+        Site::find(1)->syncMenu([1, 4, 5]);
+        $this->assertEquals([
+            ['id' => 1, 'path' => '', 'order' => 0,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Site1', 'order' => 0],
+                ]
+            ],
+            ['id' => 2, 'path' => '', 'order' => 1],
+            ['id' => 3, 'path' => '', 'order' => 2],
+            ['id' => 4, 'path' => '', 'order' => 3,
+                'childs' => [
+                    ['id' => 9, 'path' => 'Site1', 'order' => 0],
+                ]
+            ],
+            ['id' => 5, 'path' => '', 'order' => 4,
+                'childs' => [
+                    ['id' => 10, 'path' => 'Site1', 'order' => 0],
+                ]
+            ],
+        ], self::getTree(null, Menu::class));
+        
+        Site::find(1)->syncMenu([2, 3]);
+        $this->assertEquals([
+            ['id' => 1, 'path' => '', 'order' => 0],
+            ['id' => 2, 'path' => '', 'order' => 1,
+                'childs' => [
+                    ['id' => 11, 'path' => 'Site1', 'order' => 0],
+                ]
+            ],
+            ['id' => 3, 'path' => '', 'order' => 2,
+                'childs' => [
+                    ['id' => 12, 'path' => 'Site1', 'order' => 0],
+                ]
+            ],
+            ['id' => 4, 'path' => '', 'order' => 3],
+            ['id' => 5, 'path' => '', 'order' => 4],
+        ], self::getTree(null, Menu::class));
+        
+        Site::find(1)->syncMenu([2, 3]);
+        $this->assertEquals([
+            ['id' => 1, 'path' => '', 'order' => 0],
+            ['id' => 2, 'path' => '', 'order' => 1,
+                'childs' => [
+                    ['id' => 11, 'path' => 'Site1', 'order' => 0],
+                ]
+            ],
+            ['id' => 3, 'path' => '', 'order' => 2,
+                'childs' => [
+                    ['id' => 12, 'path' => 'Site1', 'order' => 0],
+                ]
+            ],
+            ['id' => 4, 'path' => '', 'order' => 3],
+            ['id' => 5, 'path' => '', 'order' => 4],
+        ], self::getTree(null, Menu::class));
+        
+        Site::find(1)->syncMenu([]);
+        $this->assertEquals([
+            ['id' => 1, 'path' => '', 'order' => 0],
+            ['id' => 2, 'path' => '', 'order' => 1],
+            ['id' => 3, 'path' => '', 'order' => 2],
+            ['id' => 4, 'path' => '', 'order' => 3],
+            ['id' => 5, 'path' => '', 'order' => 4],
+        ], self::getTree(null, Menu::class));
+
+        $this->assertEquals(105, count(DB::getQueryLog()));
+    }
 }
