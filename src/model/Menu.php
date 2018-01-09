@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\Request;
 class Menu extends Model
 {
     use SoftDeletes;
-   // use Traits\Sortable;
     use Traits\Treeable;
-    //use Traits\Path;
     use Traits\Act;
 
     protected $table = 'menu';
@@ -29,6 +27,7 @@ class Menu extends Model
      */
     protected $fillable = [
         'name',
+        'parent_id',
         'path',
         'content'
     ];
@@ -39,7 +38,7 @@ class Menu extends Model
     public function menuable()
     {
         return $this->morphTo();
-    }    
+    }
 
     public function link() 
     {

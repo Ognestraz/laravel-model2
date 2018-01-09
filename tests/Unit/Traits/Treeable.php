@@ -7,9 +7,11 @@ use Illuminate\Support\Facades\Log;
 
 trait Treeable
 {
-    public static function buildTree($nodes)
+    public static function buildTree($nodes, $modelClass = null)
     {
-        $modelClass = static::$modelClass;
+        if (null === $modelClass) {
+            $modelClass = static::$modelClass;
+        }
         foreach ($nodes as $node) {
             $model = new $modelClass();
             foreach ($node as $field => $value) {
@@ -19,11 +21,13 @@ trait Treeable
         }
     }
     
-    public static function getTree($id = null)
+    public static function getTree($id = null, $modelClass = null)
     {
-        $modelClass = static::$modelClass;
+        if (null === $modelClass) {
+            $modelClass = static::$modelClass;
+        }
         return (new $modelClass())->getTree($id);
-    }    
+    }
 
     /**
      *

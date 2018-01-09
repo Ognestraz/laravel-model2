@@ -4,12 +4,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Site extends Model
 {
-    //use SoftDeletes, Traits\Menu, Traits\Tree, Traits\Path;
-    //use Traits\Act;
-    //use Traits\Sortable;
+    use SoftDeletes;
+    use Traits\Act;
     use Traits\Treeable;
-    //use Traits\Path;
-    use Traits\Menu;
+    use Traits\Menuable;
 
     static public $site = null;
     
@@ -20,9 +18,10 @@ class Site extends Model
         'order',
         'parent_id',
         'path',
+        'view',
         'content'
     );
- 
+ /*
     public function setSettingsAttribute($settings)
     {
 
@@ -90,5 +89,5 @@ class Site extends Model
     public function view() 
     {
         return $this->template ? 'site.' . $this->template : 'site.show';
-    }
+    }*/
 }

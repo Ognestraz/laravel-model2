@@ -16,6 +16,7 @@ class SiteTest extends TestCase
 
     use RefreshDatabase;
     use Traits\Treeable;
+    use Traits\Menuable;
 //    use Traits\Path;
 
 //    public function setUp()

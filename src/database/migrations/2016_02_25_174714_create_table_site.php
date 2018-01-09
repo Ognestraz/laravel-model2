@@ -18,6 +18,7 @@ class CreateTableSite extends Migration
             $table->integer('parent_id')->default(0);
             $table->integer('order')->default(0);
             $table->string('path')->default('');
+            $table->string('view')->default('');
             $table->string('name');
             $table->text('content')->nullable();
             $table->timestamps();
