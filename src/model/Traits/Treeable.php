@@ -8,6 +8,7 @@ trait Treeable
     protected $tree;
     protected static $listTree = [];
     protected static $parentTree = [];
+    protected $listTreeSelect = [];
     protected $simpleTree = [];
 
     public static function resetTree()
@@ -153,8 +154,8 @@ trait Treeable
             $m->order = $i++;
             $m->save();
         }        
-    }    
-    
+    }
+
     protected static function treeableEventSaving($model)
     {
         self::treeableDefaultPath($model);
@@ -273,7 +274,7 @@ trait Treeable
         return collect(array_reverse($list));
     }
 
-    protected function _branch($id, &$b)
+    protected function _branch($id, &$b, $l = 0)
     {
         if ($id) {
             if (null === $b) {
@@ -286,15 +287,16 @@ trait Treeable
                 'path' => $f['path'],
                 'order' => (int)$f['order'],
             ]);
+            $this->listTreeSelect[] = ['value' => $f['id'], 'label' => str_repeat('&nbsp;', $l * 3) . $f['name']];
         }
 
         if (isset(static::$parentTree[$id])) {
             foreach (static::$parentTree[$id] as $k => $child) {
-                $this->_branch($child, $b['childs'][$k]);
+                $this->_branch($child, $b['childs'][$k], $l + 1);
             }
         }
-    }    
-    
+    }
+
     public function createTree()
     {
         $this->tree = [];
@@ -318,7 +320,15 @@ trait Treeable
 
         return $this->tree;
     }
-    
+
+    public function getSelectTree()
+    {
+        $this->listTreeSelect = [];
+        $this->getTree();
+
+        return $this->listTreeSelect;
+    }
+
     public function getTree()
     {
         $tree = $this->createTree();
@@ -339,7 +349,7 @@ trait Treeable
                     $branch = $this->_findChildrenTree($id, $v['childs']);
                     if ($branch) {
                         return $branch;
-                    }       
+                    }
                 }
             }
         }

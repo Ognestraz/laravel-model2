@@ -44,4 +44,17 @@ trait Menuable
             Menu::find($nowMenuList[$menuId])->delete();
         }
     }
+
+    protected static function bootMenuable()
+    {
+        static::deleted(function($model) {
+            $menu = $model->menu;
+            if (null === $menu) {
+                return ;
+            }
+            foreach ($menu as $item) {
+                $item->delete();
+            }
+        });
+    }
 }

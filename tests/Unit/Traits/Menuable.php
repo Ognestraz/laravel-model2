@@ -30,7 +30,7 @@ trait Menuable
         
         $this->assertEquals(7, count(DB::getQueryLog()));
     }
-    
+
     /**
      *
      * @return void
@@ -65,8 +65,7 @@ trait Menuable
 
         $this->assertEquals(19, count(DB::getQueryLog()));
     }
-    
-    
+
     /**
      *
      * @return void

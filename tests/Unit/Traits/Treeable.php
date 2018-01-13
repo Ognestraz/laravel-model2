@@ -1205,4 +1205,59 @@ trait Treeable
         ], self::getTree());
     }
 
+    /**
+     *
+     * @return void
+     */
+    public function testTreeableSelect()
+    {
+        DB::enableQueryLog();
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3'],
+            ['name' => 'Test4', 'parent_id' => 1],
+            ['name' => 'Test5', 'parent_id' => 1],
+            ['name' => 'Test6', 'parent_id' => 3],
+            ['name' => 'Test7', 'parent_id' => 3],
+            ['name' => 'Test8', 'parent_id' => 3],
+            ['name' => 'Test9', 'parent_id' => 7],
+        ]);
+        $modelClass = static::$modelClass;
+        
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0,
+                'childs' => [
+                    ['id' => 4, 'path' => 'Test1/Test4', 'order' => 0],
+                    ['id' => 5, 'path' => 'Test1/Test5', 'order' => 1],
+                ]
+            ],
+            ['id' => 2, 'path' => 'Test2', 'order' => 1],
+            ['id' => 3, 'path' => 'Test3', 'order' => 2,
+                'childs' => [
+                    ['id' => 6, 'path' => 'Test3/Test6', 'order' => 0],
+                    ['id' => 7, 'path' => 'Test3/Test7', 'order' => 1,
+                        'childs' => [
+                            ['id' => 9, 'path' => 'Test3/Test7/Test9', 'order' => 0],
+                        ]
+                    ],
+                    ['id' => 8, 'path' => 'Test3/Test8', 'order' => 2],
+                ]
+            ]
+        ], self::getTree());
+
+        $this->assertEquals([
+            ['value' => 1, 'label' => 'Test1'],
+            ['value' => 4, 'label' => '&nbsp;&nbsp;&nbsp;Test4'],
+            ['value' => 5, 'label' => '&nbsp;&nbsp;&nbsp;Test5'],
+            ['value' => 2, 'label' => 'Test2'],
+            ['value' => 3, 'label' => 'Test3'],
+            ['value' => 6, 'label' => '&nbsp;&nbsp;&nbsp;Test6'],
+            ['value' => 7, 'label' => '&nbsp;&nbsp;&nbsp;Test7'],
+            ['value' => 9, 'label' => '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Test9'],
+            ['value' => 8, 'label' => '&nbsp;&nbsp;&nbsp;Test8'],
+        ], (new $modelClass())->getSelectTree());
+
+        $this->assertEquals(53, count(DB::getQueryLog()));
+    }
 }
