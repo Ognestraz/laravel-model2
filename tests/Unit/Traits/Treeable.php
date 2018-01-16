@@ -77,7 +77,7 @@ trait Treeable
 
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0]
                 ]
             ]    
@@ -100,7 +100,7 @@ trait Treeable
 
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0]
                 ]
             ]
@@ -123,7 +123,7 @@ trait Treeable
         
         $this->assertEquals([
             ['id' => 2, 'path' => 'Test2', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 1, 'path' => 'Test2/Test1', 'order' => 0]
                 ]
             ]
@@ -148,9 +148,9 @@ trait Treeable
        
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0,
-                        'childs' => [
+                        'children' => [
                             ['id' => 3, 'path' => 'Test1/Test2/Test3', 'order' => 0]
                         ]
                     ]
@@ -176,7 +176,7 @@ trait Treeable
         $modelClass::find(3)->setParent(1);    
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0],
                     ['id' => 3, 'path' => 'Test1/Test3', 'order' => 1],
                 ]
@@ -203,9 +203,9 @@ trait Treeable
 
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0,
-                        'childs' => [
+                        'children' => [
                             ['id' => 3, 'path' => 'Test1/Test2/Test3', 'order' => 0]
                         ]
                     ]
@@ -240,13 +240,13 @@ trait Treeable
 
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0,
-                        'childs' => [
+                        'children' => [
                             ['id' => 3, 'path' => 'Test1/Test2/Test3', 'order' => 0,
-                                'childs' => [
+                                'children' => [
                                     ['id' => 4, 'path' => 'Test1/Test2/Test3/Test4', 'order' => 0,
-                                        'childs' => [
+                                        'children' => [
                                             ['id' => 5, 'path' => 'Test1/Test2/Test3/Test4/Test5', 'order' => 0]
                                         ]       
                                     ]
@@ -257,7 +257,7 @@ trait Treeable
                 ]
             ],
             ['id' => 6, 'path' => 'Test6', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test6/Test7', 'order' => 0]
                 ]
             ]
@@ -267,15 +267,15 @@ trait Treeable
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0],
             ['id' => 6, 'path' => 'Test6', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test6/Test7', 'order' => 0,
-                        'childs' => [
+                        'children' => [
                             ['id' => 2, 'path' => 'Test6/Test7/Test2', 'order' => 0,
-                                'childs' => [
+                                'children' => [
                                     ['id' => 3, 'path' => 'Test6/Test7/Test2/Test3', 'order' => 0,
-                                        'childs' => [
+                                        'children' => [
                                             ['id' => 4, 'path' => 'Test6/Test7/Test2/Test3/Test4', 'order' => 0,
-                                                'childs' => [
+                                                'children' => [
                                                     ['id' => 5, 'path' => 'Test6/Test7/Test2/Test3/Test4/Test5', 'order' => 0]
                                                 ]                                                
                                             ]
@@ -481,14 +481,14 @@ trait Treeable
 
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0],
                     ['id' => 3, 'path' => 'Test1/Test3', 'order' => 1],
                     ['id' => 4, 'path' => 'Test1/Test4', 'order' => 2],
                 ]
             ],
             ['id' => 5, 'path' => 'Test5', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
                     ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
@@ -500,7 +500,7 @@ trait Treeable
         $modelClass::find(6)->moveBefore(2);
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test1/Test6', 'order' => 0],
                     ['id' => 2, 'path' => 'Test1/Test2', 'order' => 1],
                     ['id' => 3, 'path' => 'Test1/Test3', 'order' => 2],
@@ -508,7 +508,7 @@ trait Treeable
                 ]
             ],
             ['id' => 5, 'path' => 'Test5', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
                     ['id' => 8, 'path' => 'Test5/Test8', 'order' => 1],
                     ['id' => 9, 'path' => 'Test5/Test9', 'order' => 2],
@@ -519,7 +519,7 @@ trait Treeable
         $modelClass::find(9)->moveBefore(6);
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 9, 'path' => 'Test1/Test9', 'order' => 0],
                     ['id' => 6, 'path' => 'Test1/Test6', 'order' => 1],
                     ['id' => 2, 'path' => 'Test1/Test2', 'order' => 2],
@@ -528,7 +528,7 @@ trait Treeable
                 ]
             ],
             ['id' => 5, 'path' => 'Test5', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
                     ['id' => 8, 'path' => 'Test5/Test8', 'order' => 1],
                 ]
@@ -538,7 +538,7 @@ trait Treeable
         $modelClass::find(2)->moveBefore(8);
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 9, 'path' => 'Test1/Test9', 'order' => 0],
                     ['id' => 6, 'path' => 'Test1/Test6', 'order' => 1],
                     ['id' => 3, 'path' => 'Test1/Test3', 'order' => 2],
@@ -546,7 +546,7 @@ trait Treeable
                 ]
             ],
             ['id' => 5, 'path' => 'Test5', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
                     ['id' => 2, 'path' => 'Test5/Test2', 'order' => 1],
                     ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
@@ -557,14 +557,14 @@ trait Treeable
         $modelClass::find(6)->moveBefore(8);
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 9, 'path' => 'Test1/Test9', 'order' => 0],
                     ['id' => 3, 'path' => 'Test1/Test3', 'order' => 1],
                     ['id' => 4, 'path' => 'Test1/Test4', 'order' => 2],
                 ]
             ],
             ['id' => 5, 'path' => 'Test5', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
                     ['id' => 2, 'path' => 'Test5/Test2', 'order' => 1],
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 2],
@@ -598,7 +598,7 @@ trait Treeable
             ['id' => 3, 'path' => 'Test3', 'order' => 2],
             ['id' => 4, 'path' => 'Test4', 'order' => 3],
             ['id' => 5, 'path' => 'Test5', 'order' => 4,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
                     ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
@@ -613,7 +613,7 @@ trait Treeable
             ['id' => 3, 'path' => 'Test3', 'order' => 1],
             ['id' => 4, 'path' => 'Test4', 'order' => 2],
             ['id' => 5, 'path' => 'Test5', 'order' => 3,
-                'childs' => [
+                'children' => [
                     ['id' => 1, 'path' => 'Test5/Test1', 'order' => 0],
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 1],
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 2],
@@ -628,7 +628,7 @@ trait Treeable
             ['id' => 3, 'path' => 'Test3', 'order' => 0],
             ['id' => 4, 'path' => 'Test4', 'order' => 1],
             ['id' => 5, 'path' => 'Test5', 'order' => 2,
-                'childs' => [
+                'children' => [
                     ['id' => 1, 'path' => 'Test5/Test1', 'order' => 0],
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 1],
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 2],
@@ -643,7 +643,7 @@ trait Treeable
         $this->assertEquals([
             ['id' => 3, 'path' => 'Test3', 'order' => 0],
             ['id' => 5, 'path' => 'Test5', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 4, 'path' => 'Test5/Test4', 'order' => 0],
                     ['id' => 1, 'path' => 'Test5/Test1', 'order' => 1],
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 2],
@@ -658,7 +658,7 @@ trait Treeable
         $modelClass::find(3)->moveBefore(8);
         $this->assertEquals([
             ['id' => 5, 'path' => 'Test5', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 4, 'path' => 'Test5/Test4', 'order' => 0],
                     ['id' => 1, 'path' => 'Test5/Test1', 'order' => 1],
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 2],
@@ -695,7 +695,7 @@ trait Treeable
             ['id' => 2, 'path' => 'Test2', 'order' => 1],
             ['id' => 3, 'path' => 'Test3', 'order' => 2],
             ['id' => 4, 'path' => 'Test4', 'order' => 3,
-                'childs' => [
+                'children' => [
                     ['id' => 5, 'path' => 'Test4/Test5', 'order' => 0],
                     ['id' => 6, 'path' => 'Test4/Test6', 'order' => 1],
                     ['id' => 7, 'path' => 'Test4/Test7', 'order' => 2],
@@ -712,7 +712,7 @@ trait Treeable
             ['id' => 2, 'path' => 'Test2', 'order' => 2],
             ['id' => 3, 'path' => 'Test3', 'order' => 3],
             ['id' => 4, 'path' => 'Test4', 'order' => 4,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test4/Test6', 'order' => 0],
                     ['id' => 7, 'path' => 'Test4/Test7', 'order' => 1],
                     ['id' => 8, 'path' => 'Test4/Test8', 'order' => 2],
@@ -729,7 +729,7 @@ trait Treeable
             ['id' => 3, 'path' => 'Test3', 'order' => 3],
             ['id' => 6, 'path' => 'Test6', 'order' => 4],
             ['id' => 4, 'path' => 'Test4', 'order' => 5,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test4/Test7', 'order' => 0],
                     ['id' => 8, 'path' => 'Test4/Test8', 'order' => 1],
                     ['id' => 9, 'path' => 'Test4/Test9', 'order' => 2],
@@ -746,7 +746,7 @@ trait Treeable
             ['id' => 3, 'path' => 'Test3', 'order' => 4],
             ['id' => 6, 'path' => 'Test6', 'order' => 5],
             ['id' => 4, 'path' => 'Test4', 'order' => 6,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test4/Test7', 'order' => 0],
                     ['id' => 9, 'path' => 'Test4/Test9', 'order' => 1],
                 ]
@@ -763,7 +763,7 @@ trait Treeable
             ['id' => 3, 'path' => 'Test3', 'order' => 5],
             ['id' => 6, 'path' => 'Test6', 'order' => 6],
             ['id' => 4, 'path' => 'Test4', 'order' => 7,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test4/Test7', 'order' => 0],
                 ]
             ]
@@ -908,7 +908,7 @@ trait Treeable
             ['id' => 3, 'path' => 'Test3', 'order' => 2],
             ['id' => 4, 'path' => 'Test4', 'order' => 3],
             ['id' => 5, 'path' => 'Test5', 'order' => 4,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
                     ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
@@ -923,7 +923,7 @@ trait Treeable
             ['id' => 3, 'path' => 'Test3', 'order' => 1],
             ['id' => 4, 'path' => 'Test4', 'order' => 2],
             ['id' => 5, 'path' => 'Test5', 'order' => 3,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
                     ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
@@ -938,7 +938,7 @@ trait Treeable
             ['id' => 2, 'path' => 'Test2', 'order' => 0],
             ['id' => 3, 'path' => 'Test3', 'order' => 1],
             ['id' => 5, 'path' => 'Test5', 'order' => 2,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
                     ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
@@ -953,7 +953,7 @@ trait Treeable
         $this->assertEquals([
             ['id' => 3, 'path' => 'Test3', 'order' => 0],
             ['id' => 5, 'path' => 'Test5', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
                     ['id' => 2, 'path' => 'Test5/Test2', 'order' => 1],
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 2],
@@ -968,7 +968,7 @@ trait Treeable
         $modelClass::find(3)->moveAfter(8);
         $this->assertEquals([
             ['id' => 5, 'path' => 'Test5', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
                     ['id' => 2, 'path' => 'Test5/Test2', 'order' => 1],
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 2],
@@ -1001,14 +1001,14 @@ trait Treeable
 
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 2, 'path' => 'Test1/Test2', 'order' => 0],
                     ['id' => 3, 'path' => 'Test1/Test3', 'order' => 1],
                     ['id' => 4, 'path' => 'Test1/Test4', 'order' => 2],
                 ]
             ],
             ['id' => 5, 'path' => 'Test5', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
                     ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
@@ -1020,13 +1020,13 @@ trait Treeable
         $modelClass::find(2)->moveAfter(9);
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 3, 'path' => 'Test1/Test3', 'order' => 0],
                     ['id' => 4, 'path' => 'Test1/Test4', 'order' => 1],
                 ]
             ],
             ['id' => 5, 'path' => 'Test5', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test5/Test6', 'order' => 0],
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 1],
                     ['id' => 8, 'path' => 'Test5/Test8', 'order' => 2],
@@ -1039,14 +1039,14 @@ trait Treeable
         $modelClass::find(6)->moveAfter(3);
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 3, 'path' => 'Test1/Test3', 'order' => 0],
                     ['id' => 6, 'path' => 'Test1/Test6', 'order' => 1],
                     ['id' => 4, 'path' => 'Test1/Test4', 'order' => 2],
                 ]
             ],
             ['id' => 5, 'path' => 'Test5', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
                     ['id' => 8, 'path' => 'Test5/Test8', 'order' => 1],
                     ['id' => 9, 'path' => 'Test5/Test9', 'order' => 2],
@@ -1058,7 +1058,7 @@ trait Treeable
         $modelClass::find(2)->moveAfter(4);
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 3, 'path' => 'Test1/Test3', 'order' => 0],
                     ['id' => 6, 'path' => 'Test1/Test6', 'order' => 1],
                     ['id' => 4, 'path' => 'Test1/Test4', 'order' => 2],
@@ -1066,7 +1066,7 @@ trait Treeable
                 ]
             ],
             ['id' => 5, 'path' => 'Test5', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
                     ['id' => 8, 'path' => 'Test5/Test8', 'order' => 1],
                     ['id' => 9, 'path' => 'Test5/Test9', 'order' => 2],
@@ -1077,7 +1077,7 @@ trait Treeable
         $modelClass::find(8)->moveAfter(6);
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 3, 'path' => 'Test1/Test3', 'order' => 0],
                     ['id' => 6, 'path' => 'Test1/Test6', 'order' => 1],
                     ['id' => 8, 'path' => 'Test1/Test8', 'order' => 2],
@@ -1086,7 +1086,7 @@ trait Treeable
                 ]
             ],
             ['id' => 5, 'path' => 'Test5', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test5/Test7', 'order' => 0],
                     ['id' => 9, 'path' => 'Test5/Test9', 'order' => 1],
                 ]
@@ -1117,7 +1117,7 @@ trait Treeable
             ['id' => 2, 'path' => 'Test2', 'order' => 1],
             ['id' => 3, 'path' => 'Test3', 'order' => 2],
             ['id' => 4, 'path' => 'Test4', 'order' => 3,
-                'childs' => [
+                'children' => [
                     ['id' => 5, 'path' => 'Test4/Test5', 'order' => 0],
                     ['id' => 6, 'path' => 'Test4/Test6', 'order' => 1],
                     ['id' => 7, 'path' => 'Test4/Test7', 'order' => 2],
@@ -1133,7 +1133,7 @@ trait Treeable
             ['id' => 2, 'path' => 'Test2', 'order' => 1],
             ['id' => 3, 'path' => 'Test3', 'order' => 2],
             ['id' => 4, 'path' => 'Test4', 'order' => 3,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test4/Test6', 'order' => 0],
                     ['id' => 7, 'path' => 'Test4/Test7', 'order' => 1],
                     ['id' => 8, 'path' => 'Test4/Test8', 'order' => 2],
@@ -1150,7 +1150,7 @@ trait Treeable
             ['id' => 2, 'path' => 'Test2', 'order' => 2],
             ['id' => 3, 'path' => 'Test3', 'order' => 3],
             ['id' => 4, 'path' => 'Test4', 'order' => 4,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test4/Test7', 'order' => 0],
                     ['id' => 8, 'path' => 'Test4/Test8', 'order' => 1],
                     ['id' => 9, 'path' => 'Test4/Test9', 'order' => 2],
@@ -1166,7 +1166,7 @@ trait Treeable
             ['id' => 2, 'path' => 'Test2', 'order' => 2],
             ['id' => 3, 'path' => 'Test3', 'order' => 3],
             ['id' => 4, 'path' => 'Test4', 'order' => 4,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test4/Test7', 'order' => 0],
                     ['id' => 8, 'path' => 'Test4/Test8', 'order' => 1],
                 ]
@@ -1183,7 +1183,7 @@ trait Treeable
             ['id' => 8, 'path' => 'Test8', 'order' => 3],
             ['id' => 3, 'path' => 'Test3', 'order' => 4],
             ['id' => 4, 'path' => 'Test4', 'order' => 5,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Test4/Test7', 'order' => 0],
                 ]
             ],
@@ -1227,17 +1227,17 @@ trait Treeable
         
         $this->assertEquals([
             ['id' => 1, 'path' => 'Test1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 4, 'path' => 'Test1/Test4', 'order' => 0],
                     ['id' => 5, 'path' => 'Test1/Test5', 'order' => 1],
                 ]
             ],
             ['id' => 2, 'path' => 'Test2', 'order' => 1],
             ['id' => 3, 'path' => 'Test3', 'order' => 2,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Test3/Test6', 'order' => 0],
                     ['id' => 7, 'path' => 'Test3/Test7', 'order' => 1,
-                        'childs' => [
+                        'children' => [
                             ['id' => 9, 'path' => 'Test3/Test7/Test9', 'order' => 0],
                         ]
                     ],

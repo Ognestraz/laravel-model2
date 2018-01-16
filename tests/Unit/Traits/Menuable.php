@@ -53,7 +53,7 @@ trait Menuable
         Site::find(1)->addMenu(1);
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 2, 'path' => 'Site1', 'order' => 0]
                 ]
             ]
@@ -90,12 +90,12 @@ trait Menuable
         Site::find(1)->addMenu(2);
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 3, 'path' => 'Site1', 'order' => 0]
                 ]
             ],
             ['id' => 2, 'path' => '', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 4, 'path' => 'Site1', 'order' => 0]
                 ]
             ]            
@@ -135,9 +135,9 @@ trait Menuable
         Site::find(1)->addMenu(3);
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 3, 'path' => '', 'order' => 0,
-                        'childs' => [
+                        'children' => [
                             ['id' => 5, 'path' => 'Site1', 'order' => 0]
                         ]
                     ],
@@ -176,7 +176,7 @@ trait Menuable
 
         $this->assertEquals([
             ['id' => 1, 'path' => 'Site1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 3, 'path' => 'Site1/Site3', 'order' => 0]
                 ]
             ],
@@ -187,9 +187,9 @@ trait Menuable
         Site::find(3)->addMenu(2);
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 2, 'path' => 'Site1', 'order' => 0,
-                        'childs' => [
+                        'children' => [
                             ['id' => 3, 'path' => 'Site1/Site3', 'order' => 0]
                         ]
                     ]
@@ -230,14 +230,14 @@ trait Menuable
 
         $this->assertEquals([
             ['id' => 1, 'path' => 'Site1', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 4, 'path' => 'Site1/Site4', 'order' => 0],
                     ['id' => 5, 'path' => 'Site1/Site5', 'order' => 1],
                 ]
             ],
             ['id' => 2, 'path' => 'Site2', 'order' => 1],
             ['id' => 3, 'path' => 'Site3', 'order' => 2,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Site3/Site6', 'order' => 0]
                 ]
             ],
@@ -261,35 +261,35 @@ trait Menuable
         Site::find(2)->addMenu(3);
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 4, 'path' => 'Site1', 'order' => 0,
-                        'childs' => [
+                        'children' => [
                             ['id' => 5, 'path' => 'Site1/Site4', 'order' => 0],
                             ['id' => 6, 'path' => 'Site1/Site5', 'order' => 1],
                         ]
                     ],
                     ['id' => 7, 'path' => 'Site2', 'order' => 1],
                     ['id' => 8, 'path' => 'Site3', 'order' => 2,
-                        'childs' => [
+                        'children' => [
                             ['id' => 9, 'path' => 'Site3/Site6', 'order' => 0]
                         ]
                     ],
                 ]
             ],
             ['id' => 2, 'path' => '', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 10, 'path' => 'Site1/Site4', 'order' => 0],
                     ['id' => 11, 'path' => 'Site1/Site5', 'order' => 1],
                     ['id' => 12, 'path' => 'Site3/Site6', 'order' => 2],
                 ]
             ],
             ['id' => 3, 'path' => '', 'order' => 2,
-                'childs' => [
+                'children' => [
                     ['id' => 13, 'path' => 'Site3/Site6', 'order' => 0,
-                        'childs' => [
+                        'children' => [
                             ['id' => 14, 'path' => 'Site2', 'order' => 0],
                             ['id' => 15, 'path' => 'Site1/Site5', 'order' => 1,
-                                'childs' => [
+                                'children' => [
                                     ['id' => 16, 'path' => 'Site3', 'order' => 0]
                                 ]
                             ],
@@ -340,17 +340,17 @@ trait Menuable
         Site::find(1)->syncMenu([1, 2, 3]);
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Site1', 'order' => 0],
                 ]
             ],
             ['id' => 2, 'path' => '', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 7, 'path' => 'Site1', 'order' => 0],
                 ]
             ],
             ['id' => 3, 'path' => '', 'order' => 2,
-                'childs' => [
+                'children' => [
                     ['id' => 8, 'path' => 'Site1', 'order' => 0],
                 ]
             ],
@@ -361,19 +361,19 @@ trait Menuable
         Site::find(1)->syncMenu([1, 4, 5]);
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0,
-                'childs' => [
+                'children' => [
                     ['id' => 6, 'path' => 'Site1', 'order' => 0],
                 ]
             ],
             ['id' => 2, 'path' => '', 'order' => 1],
             ['id' => 3, 'path' => '', 'order' => 2],
             ['id' => 4, 'path' => '', 'order' => 3,
-                'childs' => [
+                'children' => [
                     ['id' => 9, 'path' => 'Site1', 'order' => 0],
                 ]
             ],
             ['id' => 5, 'path' => '', 'order' => 4,
-                'childs' => [
+                'children' => [
                     ['id' => 10, 'path' => 'Site1', 'order' => 0],
                 ]
             ],
@@ -383,12 +383,12 @@ trait Menuable
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0],
             ['id' => 2, 'path' => '', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 11, 'path' => 'Site1', 'order' => 0],
                 ]
             ],
             ['id' => 3, 'path' => '', 'order' => 2,
-                'childs' => [
+                'children' => [
                     ['id' => 12, 'path' => 'Site1', 'order' => 0],
                 ]
             ],
@@ -400,12 +400,12 @@ trait Menuable
         $this->assertEquals([
             ['id' => 1, 'path' => '', 'order' => 0],
             ['id' => 2, 'path' => '', 'order' => 1,
-                'childs' => [
+                'children' => [
                     ['id' => 11, 'path' => 'Site1', 'order' => 0],
                 ]
             ],
             ['id' => 3, 'path' => '', 'order' => 2,
-                'childs' => [
+                'children' => [
                     ['id' => 12, 'path' => 'Site1', 'order' => 0],
                 ]
             ],

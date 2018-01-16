@@ -10,6 +10,7 @@ trait Treeable
     protected static $parentTree = [];
     protected $listTreeSelect = [];
     protected $simpleTree = [];
+    protected static $childrenKey = 'children';
 
     public static function resetTree()
     {
@@ -274,7 +275,7 @@ trait Treeable
         return collect(array_reverse($list));
     }
 
-    protected function _branch($id, &$b, $l = 0)
+    protected function _branch($id, &$b, $full = false, $l = 0)
     {
         if ($id) {
             if (null === $b) {
@@ -282,22 +283,26 @@ trait Treeable
             }
 
             $f = static::$listTree[$id];
-            $b = array_merge($b, [
-                'id' => $f['id'],
-                'path' => $f['path'],
-                'order' => (int)$f['order'],
-            ]);
+            if (true === $full) {
+                $b = array_merge($b, $f->toArray());
+            } else {
+                $b = array_merge($b, [
+                    'id' => $f['id'],
+                    'path' => $f['path'],
+                    'order' => (int)$f['order'],
+                ]);
+            }
             $this->listTreeSelect[] = ['value' => $f['id'], 'label' => str_repeat('&nbsp;', $l * 3) . $f['name']];
         }
 
         if (isset(static::$parentTree[$id])) {
             foreach (static::$parentTree[$id] as $k => $child) {
-                $this->_branch($child, $b['childs'][$k], $l + 1);
+                $this->_branch($child, $b[self::$childrenKey][$k], $full, $l + 1);
             }
         }
     }
 
-    public function createTree()
+    public function createTree($full = false)
     {
         $this->tree = [];
         static::$listTree = [];
@@ -314,7 +319,7 @@ trait Treeable
 
         if (!empty(static::$parentTree[0]) && is_array(static::$parentTree[0])) {
             foreach (static::$parentTree[0] as $k => $item) {
-                $this->_branch($item, $this->tree[$k]);
+                $this->_branch($item, $this->tree[$k], $full);
             }
         }        
 
@@ -329,9 +334,9 @@ trait Treeable
         return $this->listTreeSelect;
     }
 
-    public function getTree()
+    public function getTree($full = false)
     {
-        $tree = $this->createTree();
+        $tree = $this->createTree($full);
         if (null === $this->id) {
             return $tree;
         }
@@ -342,11 +347,11 @@ trait Treeable
     protected function _findChildrenTree($id, $tree = array())
     {
         foreach ($tree as $k => $v) {
-            if (!empty($v['childs'])) {
+            if (!empty($v[self::$childrenKey])) {
                 if ($v['id'] == $id) {
-                    return $v['childs'];
+                    return $v[self::$childrenKey];
                 } else {
-                    $branch = $this->_findChildrenTree($id, $v['childs']);
+                    $branch = $this->_findChildrenTree($id, $v[self::$childrenKey]);
                     if ($branch) {
                         return $branch;
                     }
