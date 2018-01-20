@@ -213,7 +213,37 @@ trait Treeable
             ]
         ], self::getTree());
     }
-    
+
+    /**
+     *
+     * @return void
+     */
+    public function testPathMoveOneChildUp()
+    {
+        self::buildTree([
+            ['name' => 'Test1'],
+            ['name' => 'Test2'],
+            ['name' => 'Test3', 'parent_id' => 2]
+        ]);
+
+        $modelClass = static::$modelClass;
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 2, 'path' => 'Test2', 'order' => 1,
+                'children' => [
+                    ['id' => 3, 'path' => 'Test2/Test3', 'order' => 0]
+                ]
+            ]
+        ], self::getTree());
+
+        $modelClass::find(3)->moveAfter(1);
+        $this->assertEquals([
+            ['id' => 1, 'path' => 'Test1', 'order' => 0],
+            ['id' => 3, 'path' => 'Test3', 'order' => 1],
+            ['id' => 2, 'path' => 'Test2', 'order' => 2],
+        ], self::getTree());
+    }
+
     /**
      *
      * @return void

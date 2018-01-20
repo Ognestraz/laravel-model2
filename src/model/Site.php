@@ -9,8 +9,6 @@ class Site extends Model
     use Traits\Treeable;
     use Traits\Menuable;
 
-    static public $site = null;
-    
     protected $table = 'site';
     protected $visible = array(
         'id',
