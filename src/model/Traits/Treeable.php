@@ -271,7 +271,7 @@ trait Treeable
         do {
             $list[] = $parent;
         } while ($parent = $parent->getParent());
-        
+
         return collect(array_reverse($list));
     }
 
