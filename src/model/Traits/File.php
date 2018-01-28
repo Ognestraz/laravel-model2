@@ -4,8 +4,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File as FileFacade;
 use Illuminate\Http\UploadedFile;
 
-use Illuminate\Http\Testing\File as FileTest;
-
 trait File {
 
     protected static function bootFile()

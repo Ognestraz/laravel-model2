@@ -15,7 +15,7 @@ trait Menuable
     public function testMenuableFirstRoot()
     {
         DB::enableQueryLog();
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1']
         ], Site::class);
 
@@ -38,11 +38,11 @@ trait Menuable
     public function testMenuableToOneMenu()
     {
         DB::enableQueryLog();
-        self::buildTree([
+        self::createItems([
             ['name' => 'Menu1', 'path' => '']
         ], Menu::class);        
         
-        self::buildTree([
+        self::createItems([
             ['name' => 'Site1']
         ], Site::class);
 
@@ -73,12 +73,12 @@ trait Menuable
     public function testMenuableOneSiteTwoMenu()
     {
         DB::enableQueryLog();
-        self::buildTree([
+        self::createItems([
             ['name' => 'Menu1', 'path' => ''],
             ['name' => 'Menu2', 'path' => ''],
         ], Menu::class);        
         
-        self::buildTree([
+        self::createItems([
             ['name' => 'Site1']
         ], Site::class);
 
@@ -117,13 +117,13 @@ trait Menuable
     public function testMenuableOneSiteTwoMenuDiffLevel()
     {
         DB::enableQueryLog();
-        self::buildTree([
+        self::createItems([
             ['name' => 'Menu1', 'path' => ''],
             ['name' => 'Menu2', 'path' => ''],
             ['name' => 'Menu3', 'path' => '', 'parent_id' => 1],
         ], Menu::class);        
         
-        self::buildTree([
+        self::createItems([
             ['name' => 'Site1']
         ], Site::class);
 
@@ -164,11 +164,11 @@ trait Menuable
     public function testMenuableSomeSiteMenuDiffLevel()
     {
         DB::enableQueryLog();
-        self::buildTree([
+        self::createItems([
             ['name' => 'Menu1', 'path' => '']
         ], Menu::class);        
         
-        self::buildTree([
+        self::createItems([
             ['name' => 'Site1'],
             ['name' => 'Site2'],
             ['name' => 'Site3', 'parent_id' => 1],
@@ -213,13 +213,13 @@ trait Menuable
     public function testMenuableFull()
     {
         DB::enableQueryLog();
-        self::buildTree([
+        self::createItems([
             ['name' => 'Menu1', 'path' => ''],
             ['name' => 'Menu2', 'path' => ''],
             ['name' => 'Menu3', 'path' => ''],
         ], Menu::class);        
         
-        self::buildTree([
+        self::createItems([
             ['name' => 'Site1'],
             ['name' => 'Site2'],
             ['name' => 'Site3'],
@@ -321,7 +321,7 @@ trait Menuable
     public function testMenuableOneSiteSyncMenu()
     {
         DB::enableQueryLog();
-        self::buildTree([
+        self::createItems([
             ['name' => 'Menu1', 'path' => ''],
             ['name' => 'Menu2', 'path' => ''],
             ['name' => 'Menu3', 'path' => ''],
@@ -329,7 +329,7 @@ trait Menuable
             ['name' => 'Menu5', 'path' => ''],
         ], Menu::class);
 
-        self::buildTree([
+        self::createItems([
             ['name' => 'Site1']
         ], Site::class);
 

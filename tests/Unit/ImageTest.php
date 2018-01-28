@@ -2,12 +2,11 @@
 
 namespace Ognestraz\Tests\Unit;
 
-use Tests\TestCase;
-use Model\Image;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
+use Model\Image;
+use Ognestraz\Tests\TestCase;
 
 class ImageTest extends TestCase
 {

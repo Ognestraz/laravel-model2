@@ -8,6 +8,7 @@ class Site extends Model
     use Traits\Act;
     use Traits\Treeable;
     use Traits\Menuable;
+    use Traits\Imageable;
 
     protected $table = 'site';
     protected $visible = array(

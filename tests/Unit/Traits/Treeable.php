@@ -7,20 +7,6 @@ use Illuminate\Support\Facades\Log;
 
 trait Treeable
 {
-    public static function buildTree($nodes, $modelClass = null)
-    {
-        if (null === $modelClass) {
-            $modelClass = static::$modelClass;
-        }
-        foreach ($nodes as $node) {
-            $model = new $modelClass();
-            foreach ($node as $field => $value) {
-                $model->$field = $value;
-            }
-            $model->save();            
-        }
-    }
-    
     public static function getTree($id = null, $modelClass = null)
     {
         if (null === $modelClass) {
@@ -36,7 +22,7 @@ trait Treeable
     public function testPathFirstRoot()
     {
         DB::enableQueryLog();
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1']
         ]);
 
@@ -53,7 +39,7 @@ trait Treeable
      */
     public function testPathTwoRoots()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
         ]);
@@ -70,7 +56,7 @@ trait Treeable
      */
     public function testPathOneChildCreate()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2', 'parent_id' => 1],
         ]);
@@ -90,7 +76,7 @@ trait Treeable
      */
     public function testPathOneChildMoveSecondToFirst()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
         ]);
@@ -113,7 +99,7 @@ trait Treeable
      */
     public function testPathOneChildMoveFirstToSecond()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
         ]);
@@ -136,7 +122,7 @@ trait Treeable
      */
     public function testPathChildTwoLevel()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3']
@@ -165,7 +151,7 @@ trait Treeable
      */
     public function testPathTwoChild()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3']
@@ -190,7 +176,7 @@ trait Treeable
      */
     public function testPathMoveBitweenParents()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3']
@@ -220,7 +206,7 @@ trait Treeable
      */
     public function testPathMoveOneChildUp()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3', 'parent_id' => 2]
@@ -250,7 +236,7 @@ trait Treeable
      */
     public function testPathMoveLongChain()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3'],
@@ -327,7 +313,7 @@ trait Treeable
      */
     public function testTreeableOrderBasic()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3'],
@@ -351,7 +337,7 @@ trait Treeable
      */
     public function testTreeableOrderDelete()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3'],
@@ -395,7 +381,7 @@ trait Treeable
      */
     public function testTreeableMoveBeforeOneLevelUp()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3'],
@@ -446,7 +432,7 @@ trait Treeable
      */
     public function testTreeableMoveBeforeOneLevelDown()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3'],
@@ -496,7 +482,7 @@ trait Treeable
      * @return void
      */
     public function testTreeableMoveBeforeBetweenLevel() {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2', 'parent_id' => 1],
             ['name' => 'Test3', 'parent_id' => 1],
@@ -609,7 +595,7 @@ trait Treeable
      */
     public function testTreeableMoveBeforeDownLevel()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3'],
@@ -707,7 +693,7 @@ trait Treeable
      */
     public function testTreeableMoveBeforeUpLevel()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3'],
@@ -818,7 +804,7 @@ trait Treeable
      */
     public function testTreeableMoveAfterOneLevelUp()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3'],
@@ -869,7 +855,7 @@ trait Treeable
      */
     public function testTreeableMoveAfterOneLevelDown()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3'],
@@ -919,7 +905,7 @@ trait Treeable
      * @return void
      */
     public function testTreeableMoveAfterDownLevel() {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3'],
@@ -1016,7 +1002,7 @@ trait Treeable
      * @return void
      */
     public function testTreeableMoveAfterBetweenLevel() {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2', 'parent_id' => 1],
             ['name' => 'Test3', 'parent_id' => 1],
@@ -1129,7 +1115,7 @@ trait Treeable
      */
     public function testTreeableMoveAfterUpLevel()
     {
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3'],
@@ -1242,7 +1228,7 @@ trait Treeable
     public function testTreeableSelect()
     {
         DB::enableQueryLog();
-        self::buildTree([
+        self::createItems([
             ['name' => 'Test1'],
             ['name' => 'Test2'],
             ['name' => 'Test3'],

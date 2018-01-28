@@ -9,6 +9,7 @@ class Menu extends Model
     use SoftDeletes;
     use Traits\Treeable;
     use Traits\Act;
+    use Traits\Imageable;
 
     protected $table = 'menu';
     protected $visible = [
