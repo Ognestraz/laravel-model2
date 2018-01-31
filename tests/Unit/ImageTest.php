@@ -18,6 +18,9 @@ class ImageTest extends TestCase
     {
         parent::setUp();
         foreach (Storage::files() as $file) {
+            if ('.gitignore' === $file) {
+                continue;
+            }
             Storage::delete($file);
         }
     }

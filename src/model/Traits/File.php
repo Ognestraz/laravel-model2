@@ -29,6 +29,10 @@ trait File {
 
     public function setFileAttribute($file)
     {
+        if (true === is_array($file)) {
+            $file = $file[0];
+        }
+
         if ($file instanceof UploadedFile) {
             if (empty($this->attributes['path'])) {
                 $this->attributes['path'] = self::genName($file);
