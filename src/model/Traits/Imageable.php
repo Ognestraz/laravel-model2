@@ -6,7 +6,7 @@ trait Imageable {
     /**
      * Get all of the
      */
-    public function image()
+    public function images()
     {
         return $this->morphMany(Image::class, 'imageable');
     }
@@ -14,6 +14,6 @@ trait Imageable {
     public function addImage($id)
     {
         $image = Image::find($id);
-        $this->image()->save($image);
+        $this->images()->save($image);
     }    
 }

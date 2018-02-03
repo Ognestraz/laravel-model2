@@ -27,7 +27,7 @@ trait Imageable
 
         $model = $modelClass::find(1);
         $this->assertEquals(1, $model->id);
-        $this->assertEquals([], $model->image->toArray());
+        $this->assertEquals([], $model->images->toArray());
 
         $image = Image::find(1);
         $this->assertEquals(1, $image->id);
@@ -37,10 +37,11 @@ trait Imageable
         $this->assertEquals([[
             'id' => 1,
             'act' => 0,
+            'order' => 0,
             'name' => null,
             'description' => null,
             'path' => $image->path
-        ]], $imageSite->image->toArray());
+        ]], $imageSite->images->toArray());
 
         $this->assertEquals(10, count(DB::getQueryLog()));
     }
@@ -64,7 +65,7 @@ trait Imageable
         ], Image::class);
 
         $model = $modelClass::find(1);
-        $this->assertEquals([], $model->image->toArray());
+        $this->assertEquals([], $model->images->toArray());
         $model->addImage(1);
         $model->addImage(2);
 
@@ -74,6 +75,7 @@ trait Imageable
                 'id' => 1,
                 'act' => 0,
                 'name' => null,
+                'order' => 0,
                 'description' => null,
                 'path' => Image::find(1)->path
             ],
@@ -81,10 +83,11 @@ trait Imageable
                 'id' => 2,
                 'act' => 0,
                 'name' => null,
+                'order' => 0,
                 'description' => null,
                 'path' => Image::find(2)->path
             ],            
-        ], $imageSite->image->toArray());
+        ], $imageSite->images->toArray());
 
         $this->assertEquals(14, count(DB::getQueryLog()));
     }
@@ -113,22 +116,24 @@ trait Imageable
                 'id' => 1,
                 'act' => 0,
                 'name' => null,
+                'order' => 0,
                 'description' => null,
                 'path' => Image::find(1)->path
             ]           
-        ], $modelClass::find(1)->image->toArray());
+        ], $modelClass::find(1)->images->toArray());
         
         $modelClass::find(2)->addImage(1);
-        $this->assertEquals([], $modelClass::find(1)->image->toArray());        
+        $this->assertEquals([], $modelClass::find(1)->images->toArray());
         $this->assertEquals([
             [
                 'id' => 1,
                 'act' => 0,
                 'name' => null,
+                'order' => 0,
                 'description' => null,
                 'path' => Image::find(1)->path
             ]           
-        ], $modelClass::find(2)->image->toArray());
+        ], $modelClass::find(2)->images->toArray());
 
         $this->assertEquals(19, count(DB::getQueryLog()));
     }

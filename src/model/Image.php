@@ -11,6 +11,7 @@ class Image extends Model {
         'id',
         'act',
         'path',
+        'order',
         'name',
         'description',
         'filename'
