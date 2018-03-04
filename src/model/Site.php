@@ -11,82 +11,30 @@ class Site extends Model
     use Traits\Imageable;
 
     protected $table = 'site';
-    protected $visible = array(
+    protected $visible = [
         'id',
         'name',
         'order',
         'parent_id',
         'path',
         'view',
+        'preview',
         'content'
-    );
- /*
-    public function setSettingsAttribute($settings)
-    {
+    ];
 
-    }  
-
-    public function getSettingsAttribute($value)
-    {
-        return is_string($value) ? unserialize($value) : [];
-    }    
-
-    public function getSettings($param = null)
-    {
-        $return = empty($this->settings) ? self::find(1)->settings : $this->settings;
-        return $return;
-    }
-    
-    public function getTitle()
-    {
-        return !empty($this->title) ? $this->title : $this->name;
-    }
-
-    public function getKeywords()
-    {
-        if (!empty($this->keywords)) {
-            return $this->keywords;
-        }
-
-        return self::find(1)->keywords;
-    }
-
-    public function getDescription()
-    {
-        if (!empty($this->description)) {
-            return $this->description;
-        }
-
-        return self::find(1)->description;
-    }
-
-    public function link() 
-    {
-        return url('/').'/'.$this->path;
-    }
-    
-    public function template($template, $childsTemplate = null)
-    {
-        $this->template = $template;
-
-        if (!empty($childsTemplate)) {
-
-            foreach ($this->childs()->get() as $item) {
-
-                $item->template = $childsTemplate;
-                $item->save();
-
-            }
-            
-        }
-
-        $this->save();
-        
-        return $this->template;
-    }
-    
-    public function view() 
-    {
-        return $this->template ? 'site.' . $this->template : 'site.show';
-    }*/
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'act',
+        'order',
+        'path',
+        'view',
+        'parent_id',
+        'name',
+        'preview',
+        'content',
+    ];
 }

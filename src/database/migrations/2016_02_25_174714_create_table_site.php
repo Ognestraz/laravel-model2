@@ -20,6 +20,7 @@ class CreateTableSite extends Migration
             $table->string('path')->default('');
             $table->string('view')->default('');
             $table->string('name');
+            $table->text('preview')->nullable();
             $table->text('content')->nullable();
             $table->timestamps();
             $table->softDeletes();
